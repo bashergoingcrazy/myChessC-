@@ -1,4 +1,5 @@
-﻿using System;
+﻿using myChess.Resources.Classes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,7 +29,7 @@ namespace myChess
             SolidColorBrush lightSquareBrush = (SolidColorBrush)FindResource("lightSqareColor");
             SolidColorBrush darkSquareBrush = (SolidColorBrush)FindResource("darkSquareColor");
             Board board = new Board(ChessBoard, lightSquareBrush, darkSquareBrush);
-            board.InitializeBoard();
+            BoardUI ui = new BoardUI(board);
         }
 
         private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)

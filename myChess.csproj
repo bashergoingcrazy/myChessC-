@@ -7,4 +7,37 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Resources\Images\BBishop.png" />
+    <None Remove="Resources\Images\BKing.png" />
+    <None Remove="Resources\Images\BKnight.png" />
+    <None Remove="Resources\Images\BPawn.png" />
+    <None Remove="Resources\Images\BQueen.png" />
+    <None Remove="Resources\Images\BRook.png" />
+    <None Remove="Resources\Images\WBishop.png" />
+    <None Remove="Resources\Images\WKing.png" />
+    <None Remove="Resources\Images\WKnight.png" />
+    <None Remove="Resources\Images\WPawn.png" />
+    <None Remove="Resources\Images\WQueen.png" />
+    <None Remove="Resources\Images\WRook.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Images\BBishop.png" />
+    <Resource Include="Resources\Images\BKing.png" />
+    <Resource Include="Resources\Images\BKnight.png" />
+    <Resource Include="Resources\Images\BQueen.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Images\BPawn.png" />
+    <Resource Include="Resources\Images\BRook.png" />
+    <Resource Include="Resources\Images\WBishop.png" />
+    <Resource Include="Resources\Images\WKing.png" />
+    <Resource Include="Resources\Images\WKnight.png" />
+    <Resource Include="Resources\Images\WPawn.png" />
+    <Resource Include="Resources\Images\WQueen.png" />
+    <Resource Include="Resources\Images\WRook.png" />
+  </ItemGroup>
+
 </Project>
