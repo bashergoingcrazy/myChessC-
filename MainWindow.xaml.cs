@@ -21,15 +21,31 @@ namespace myChess
     /// </summary>
     public partial class MainWindow : Window
     {
+        //public MainWindow()
+        //{
+        //    InitializeComponent();
+        //    PreviewKeyDown += MainWindow_PreviewKeyDown;
+
+        //    SolidColorBrush lightSquareBrush = (SolidColorBrush)FindResource("lightSqareColor");
+        //    SolidColorBrush darkSquareBrush = (SolidColorBrush)FindResource("darkSquareColor");
+        //    Board board = new Board(ChessBoard, lightSquareBrush, darkSquareBrush);
+        //    BoardUI ui = new BoardUI(board);
+        //}
+
+        //private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        //{
+        //    if (e.Key == Key.Escape)
+        //    {
+        //        Close();
+        //        Application.Current.Shutdown();
+        //    }
+          
+        //}
         public MainWindow()
         {
             InitializeComponent();
+            AttackTables attack = new AttackTables();
             PreviewKeyDown += MainWindow_PreviewKeyDown;
-
-            SolidColorBrush lightSquareBrush = (SolidColorBrush)FindResource("lightSqareColor");
-            SolidColorBrush darkSquareBrush = (SolidColorBrush)FindResource("darkSquareColor");
-            Board board = new Board(ChessBoard, lightSquareBrush, darkSquareBrush);
-            BoardUI ui = new BoardUI(board);
         }
 
         private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -39,7 +55,7 @@ namespace myChess
                 Close();
                 Application.Current.Shutdown();
             }
-          
+
         }
     }
 }
