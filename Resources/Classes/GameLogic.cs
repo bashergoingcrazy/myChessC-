@@ -28,6 +28,19 @@ namespace myChess.Resources.Classes
             return _moveGenerator.GetLegalMoves();
         }
 
+        public Color GetPieceColor(int row, int column)
+        {
+            int newIndex = 8*row + column;
+            return PieceType.GetColor(_gameState.gameState[newIndex]);
+        }
 
+        public void UpdateState(Position sourcePosition, Position targetPosition)
+        {
+            int sourceIndex = 8 * sourcePosition.X + sourcePosition.Y;
+            int targetIndex = 8 * targetPosition.X + targetPosition.Y;
+
+            _gameState.gameState[targetIndex] = _gameState.gameState[sourceIndex];
+            _gameState.gameState[sourceIndex] = PieceType.CreatePiece(Piece.Empty , Color.NoCol);
+        }
     }
 }

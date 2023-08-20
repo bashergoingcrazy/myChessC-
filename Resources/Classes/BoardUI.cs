@@ -125,23 +125,36 @@ namespace myChess.Resources.Classes
             }
         }
 
-        private void HandleDrop(Image image, int row, int col)
+        private void HandleDrop(Image sourceImage, int targetRow, int targetCol)
         {
-            if (row == Inrow && col == Incol)
-            {
-                RedrawSquares();
-                return;
-            }
-            
+            Position targetPosition = new Position(targetRow, targetCol);
 
-            //Handle the Game Logic and update the gamestate in the logic side 
-            
-            // Update the UI to reflect the new gameState
+            // Check if the target position is within the highlighting squares
+            if (HighlightingSquare.Contains(targetPosition))
+            {
+                int sourceRow = Grid.GetRow(sourceImage);
+                int sourceCol = Grid.GetColumn(sourceImage);
+
+               
+                Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
+
+                // If there's an opponent's piece at the target position, remove it
+                Image targetImage = FindImageAtPosition(targetRow, targetCol);
+                if (targetImage != null)
+                {
+                    // Remove the target image from the grid
+                    _board._grid.Children.Remove(targetImage);
+                }
+
+                // Move the source image to the target position
+                Grid.SetRow(sourceImage, targetRow);
+                Grid.SetColumn(sourceImage, targetCol);
+
+                Position sourcePosition = new Position(Inrow, Incol);
+                // Update the game state to reflect the move
+                _gameLogic.UpdateState(sourcePosition, targetPosition);
+            }
             RedrawSquares();
-            Grid.SetRow(image, row);
-            Grid.SetColumn(image, col);
-            
-            //May display the gameState List to identify and Debug 
         }
 
         private void RedrawSquares()
@@ -199,6 +212,18 @@ namespace myChess.Resources.Classes
             return null; // No rectangle found at the specified position
         }
 
+        private Image FindImageAtPosition(int row, int col)
+        {
+            foreach (UIElement child in _board._grid.Children)
+            {
+                if (child is Image targetImage && Grid.GetRow(targetImage) == row && Grid.GetColumn(targetImage) == col)
+                {
+                    return targetImage;
+                    break;
+                }
+            }
+            return null;
+        }
     }
 }
 
