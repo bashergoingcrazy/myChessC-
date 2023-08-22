@@ -1,29 +1,19 @@
-﻿using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Documents;
-using System.Windows.Ink;
 
 namespace myChess.Resources.Classes
 {
     public class AttackTables
     {
-        BitBoard handle;
-        ulong[,] pawn_attacks = new ulong[2, 64];
-        ulong[] knight_attacks = new ulong[64];
-        ulong[] king_attacks = new ulong[64];
+        public ulong[,] pawn_attacks = new ulong[2, 64];
+        public ulong[] knight_attacks = new ulong[64];
+        public ulong[] king_attacks = new ulong[64];
 
-        ulong[] bishop_masks = new ulong[64];
-        ulong[] rook_masks = new ulong[64];
+        public ulong[] bishop_masks = new ulong[64];
+        public ulong[] rook_masks = new ulong[64];
 
-        ulong[,] bishop_attacks = new ulong[64, 512];
-        ulong[,] rook_attacks = new ulong[64, 4096];
+        public ulong[,] bishop_attacks = new ulong[64, 512];
+        public ulong[,] rook_attacks = new ulong[64, 4096];
 
 
         MagicGenerator MG = new MagicGenerator();
@@ -31,12 +21,11 @@ namespace myChess.Resources.Classes
         public AttackTables()
         {
             init_leapers_attacks();
-            MagicGenerator kmp = new MagicGenerator();
             init_sliders_attacks((int)Slider.Bishop);
             init_sliders_attacks((int)Slider.Rook);
 
             //init_magic_numbers();    //Used for generating an initalizing magic numbers
-            testing();
+            //testing();
         }
 
         void init_leapers_attacks()
@@ -49,33 +38,33 @@ namespace myChess.Resources.Classes
                 knight_attacks[square] = MaskKnightAttacks(square);
 
                 king_attacks[square] = MaskKingAttacks(square);
-                
+
             }
 
         }
 
         private void testing()
         {
-            ulong occupancy = 0UL;
+            //ulong occupancy = 0UL;
 
-            BitBoard.set_bit(ref occupancy, (int)Square.c5);
-            BitBoard.set_bit(ref occupancy, (int)Square.f2);
-            BitBoard.set_bit(ref occupancy, (int)Square.g7);
-            BitBoard.set_bit(ref occupancy, (int)Square.h8);
-            BitBoard.set_bit(ref occupancy, (int)Square.b2);
-            BitBoard.set_bit(ref occupancy, (int)Square.g5);
-            BitBoard.set_bit(ref occupancy, (int)Square.e7);
-            BitBoard.set_bit(ref occupancy, (int)Square.e2);
-            BitBoard.print_bitboard(occupancy);
+            //BitBoard.set_bit(ref occupancy, (int)Square.b6);
+            //BitBoard.set_bit(ref occupancy, (int)Square.d6);
+            //BitBoard.set_bit(ref occupancy, (int)Square.f6);
+            //BitBoard.set_bit(ref occupancy, (int)Square.b4);
+            //BitBoard.set_bit(ref occupancy, (int)Square.g4);
+            //BitBoard.set_bit(ref occupancy, (int)Square.c3);
+            //BitBoard.set_bit(ref occupancy, (int)Square.d3);
+            //BitBoard.set_bit(ref occupancy, (int)Square.e3);
+            //BitBoard.print_bitboard(occupancy);
 
 
-            BitBoard.print_bitboard(get_bishop_attacks((int)Square.d4, occupancy));
-            BitBoard.print_bitboard(get_rook_attacks((int)Square.e5, occupancy));
+            //BitBoard.print_bitboard(get_queen_attacks((int)Square.d4, occupancy));
+            //BitBoard.print_bitboard(get_queen_attacks((int)Square.e5, occupancy));
 
 
         }
 
-        public ulong MaskPawnAttacks(Side side, Square square )
+        public ulong MaskPawnAttacks(Side side, Square square)
         {
             int squareValue = (int)square; // Convert enum to integer
             return MaskPawnAttacks(side, squareValue);
@@ -142,7 +131,8 @@ namespace myChess.Resources.Classes
             BitBoard.set_bit(ref bitboard, square);
             //handle.print_bitboard(bitboard);
 
-            if ((bitboard & Constants.NOT_A_FILE) != 0) {
+            if ((bitboard & Constants.NOT_A_FILE) != 0)
+            {
                 attacks |= (bitboard >> 9);
                 attacks |= (bitboard >> 1);
                 attacks |= (bitboard << 7);
@@ -162,15 +152,15 @@ namespace myChess.Resources.Classes
             return attacks;
         }
 
-        public ulong get_bishop_attacks(int square, ulong occupancy) 
+        public ulong get_bishop_attacks(int square, ulong occupancy)
         {
-           //get bishop attacks assuming current board occupancy
+            //get bishop attacks assuming current board occupancy
             occupancy &= bishop_masks[square];
             occupancy *= Constants.BISHOP_MAGIC_NUMBERS[square];
             occupancy >>= 64 - Constants.bishop_relevant_bits[square];
 
             return bishop_attacks[square, occupancy];
-        
+
         }
 
         public ulong get_rook_attacks(int square, ulong occupancy)
@@ -182,11 +172,35 @@ namespace myChess.Resources.Classes
             return rook_attacks[square, occupancy];
         }
 
+        public ulong get_queen_attacks(int square, ulong occupancy)
+        {
+            //init result attacks bitboard
+            ulong result = 0Ul;
 
+            //init bishop occupancies
+            ulong bishop_occupancies = occupancy;
+
+            ulong rook_occpancies = occupancy;
+
+
+            bishop_occupancies &= bishop_masks[square];
+            bishop_occupancies *= Constants.BISHOP_MAGIC_NUMBERS[square];
+            bishop_occupancies >>= 64 - Constants.bishop_relevant_bits[square];
+
+            result = bishop_attacks[square, bishop_occupancies];
+
+            rook_occpancies &= rook_masks[square];
+            rook_occpancies *= Constants.ROOK_MAGIC_NUMBERS[square];
+            rook_occpancies >>= 64 - Constants.rook_relevant_bits[square];
+
+            result |= rook_attacks[square, rook_occpancies];
+
+            return result;
+        }
 
         public void init_sliders_attacks(int bishop)
         {
-            for(int square = 0; square<64; square++)
+            for (int square = 0; square < 64; square++)
             {
                 bishop_masks[square] = MaskBishopAttacks(square);
                 rook_masks[square] = MaskRookAttacks(square);
@@ -200,13 +214,13 @@ namespace myChess.Resources.Classes
 
                 for (int index = 0; index < occupancy_indicies; index++)
                 {
-                    if(bishop == (int)Slider.Bishop)
+                    if (bishop == (int)Slider.Bishop)
                     {
                         ulong occupancy = set_occupancy(index, relevant_bits, attack_mask);
 
                         ulong magic_index = (occupancy * Constants.BISHOP_MAGIC_NUMBERS[square]) >> (64 - Constants.bishop_relevant_bits[square]);
 
-                        bishop_attacks[square,magic_index] = BishopAttacksOnTheFly(square, occupancy);
+                        bishop_attacks[square, magic_index] = BishopAttacksOnTheFly(square, occupancy);
                     }
                     else
                     {
@@ -329,20 +343,21 @@ namespace myChess.Resources.Classes
             return attacks;
         }
 
+
         public ulong set_occupancy(int index, int bits_in_mask, ulong attack_mask)
         {
             //occupancy map
             ulong occupancy = 0UL;
 
             //loop over the range of bits in within the attack mask
-            for(int count = 0; count < bits_in_mask; count++)
+            for (int count = 0; count < bits_in_mask; count++)
             {
                 int square = BitBoard.get_lsb_index(attack_mask);
 
                 BitBoard.pop_bit(ref attack_mask, square);
 
                 //make sure that occupancy is on board
-                if((index & (1<<count)) != 0)
+                if ((index & (1 << count)) != 0)
                 {
                     occupancy |= (1UL << square);
                 }
@@ -408,10 +423,10 @@ namespace myChess.Resources.Classes
         void init_magic_numbers()
         {
             //loop over 64 board squares
-            for(int square = 0; square < 64; square++)
+            for (int square = 0; square < 64; square++)
             {
-                ulong magicNumber = find_magic_number(square, Constants.rook_relevant_bits[square],0);
-                Debug.WriteLine("0x" + magicNumber.ToString("X")+", ");      
+                ulong magicNumber = find_magic_number(square, Constants.rook_relevant_bits[square], 0);
+                Debug.WriteLine("0x" + magicNumber.ToString("X") + ", ");
             }
 
             Debug.WriteLine("\n\n");
@@ -419,7 +434,7 @@ namespace myChess.Resources.Classes
             for (int square = 0; square < 64; square++)
             {
                 ulong magicNumber = find_magic_number(square, Constants.bishop_relevant_bits[square], 1);
-                Debug.WriteLine("0x" + magicNumber.ToString("X")+",");
+                Debug.WriteLine("0x" + magicNumber.ToString("X") + ",");
             }
 
         }
@@ -433,10 +448,18 @@ namespace myChess.Resources.Classes
     }
     public class Constants
     {
-        public const ulong  NOT_A_FILE = 18374403900871474942;
-        public const ulong  NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
+        public const ulong NOT_A_FILE = 18374403900871474942;
+        public const ulong NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
         public const ulong NOT_HG_FILE = 0x3F3F3F3F3F3F3F3F;
         public const ulong NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC;
+        public const string EMPTY_BOARD = "8/8/8/8/8/8/8/8 w - - ";
+        public const string START_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
+        public const string TRICKY_POSITION = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1 ";
+        public const string KILLER_POSITION = "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1";
+        public const string CMK_POSITION = "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 ";
+      
+
+
         public static readonly string[] SetOfCoordinates = new string[]
         {
             "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",

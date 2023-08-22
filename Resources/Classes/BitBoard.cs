@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http.Headers;
+﻿using System.Diagnostics;
 using System.Numerics;
-using System.Printing.IndexedProperties;
-using System.Text;
-using System.Threading.Tasks;
 namespace myChess.Resources.Classes
 {
 
@@ -19,25 +12,32 @@ namespace myChess.Resources.Classes
         a4 = 32, b4 = 33, c4 = 34, d4 = 35, e4 = 36, f4 = 37, g4 = 38, h4 = 39,
         a3 = 40, b3 = 41, c3 = 42, d3 = 43, e3 = 44, f3 = 45, g3 = 46, h3 = 47,
         a2 = 48, b2 = 49, c2 = 50, d2 = 51, e2 = 52, f2 = 53, g2 = 54, h2 = 55,
-        a1 = 56, b1 = 57, c1 = 58, d1 = 59, e1 = 60, f1 = 61, g1 = 62, h1 = 63,
+        a1 = 56, b1 = 57, c1 = 58, d1 = 59, e1 = 60, f1 = 61, g1 = 62, h1 = 63, no_sq = 64,
     }
     public enum Side
     {
         White = 0,
         Black = 1,
+        Both = 2
     }
 
     public enum Slider
     {
         Rook = 0,
-        Bishop =1,
+        Bishop = 1,
+    }
+
+    public enum castle
+    {
+        wk = 1, wq = 2,
+        bk = 4, bq = 8,
     }
 
     public class BitBoard
     {
         public BitBoard()
         {
-         
+
         }
         //Has pop, get, set functions
 
@@ -48,9 +48,9 @@ namespace myChess.Resources.Classes
             print_bitboard(example);
             set_bit(ref example, Square.e4);
             set_bit(ref example, Square.d7);
-            set_bit(ref example ,Square.e1);
+            set_bit(ref example, Square.e1);
             print_bitboard(example);
-            pop_bit(ref example, Square.d7 );
+            pop_bit(ref example, Square.d7);
             pop_bit(ref example, Square.d7);
             print_bitboard(example);
             pop_bit(ref example, Square.d7);
@@ -74,7 +74,7 @@ namespace myChess.Resources.Classes
 
         public static int get_lsb_index(ulong bitboard)
         {
-            if (bitboard == 0) return -1; 
+            if (bitboard == 0) return -1;
             return BitOperations.TrailingZeroCount(bitboard);
 
             //Myimplementation for the lsbbits
@@ -93,18 +93,19 @@ namespace myChess.Resources.Classes
         public static void print_bitboard(ulong bitboard)
         {
             //loop over board ranks 
-            for(int rank = 0; rank<8; rank++)
+            for (int rank = 0; rank < 8; rank++)
             {
                 Debug.Write(8 - rank + "  ");
 
 
-                for (int file=0; file<8; file++) { 
+                for (int file = 0; file < 8; file++)
+                {
                     //convert file & rank into square index
                     int square = rank * 8 + file;
 
-                   
-                    
-                    Debug.Write(get_bit(bitboard,square)+ " ");
+
+
+                    Debug.Write(get_bit(bitboard, square) + " ");
 
                 }
                 Debug.WriteLine("");
@@ -142,13 +143,24 @@ namespace myChess.Resources.Classes
         }
         public static void pop_bit(ref ulong bitboard, int square)
         {
-            if(get_bit(bitboard, square) == 1)
+            if (get_bit(bitboard, square) == 1)
             {
                 bitboard ^= (1UL << square);
             }
         }
+        public static string square_to_coordinates(int squareValue)
+        {
+            if (squareValue < 0 || squareValue >= 64)
+            {
+                return "Invalid square";
+            }
 
+            int file = squareValue % 8;
+            int rank = 8 - squareValue / 8;
 
+            char fileChar = (char)('a' + file);
+            return $"{fileChar}{rank}";
+        }
 
     }
 }

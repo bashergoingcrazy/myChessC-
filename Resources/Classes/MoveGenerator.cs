@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Collections.Generic;
 
 namespace myChess.Resources.Classes
 {
@@ -13,7 +8,7 @@ namespace myChess.Resources.Classes
         private int _row;
         private int _col;
 
-        public MoveGenerator(GameState gameState) 
+        public MoveGenerator(GameState gameState)
         {
             _currentState = gameState;
         }
@@ -31,7 +26,7 @@ namespace myChess.Resources.Classes
             Piece pieceType = PieceType.GetPiece(pieceValue);
             Color pieceColor = PieceType.GetColor(pieceValue);
 
-            List<Position> finalList = new List<Position> {};
+            List<Position> finalList = new List<Position> { };
 
             HandlePiece(pieceType, pieceColor, finalList);
 
@@ -68,15 +63,15 @@ namespace myChess.Resources.Classes
 
         private void AddPawnMoves(Color pieceColor, List<Position> finalList)
         {
-            if(pieceColor == Color.White)
+            if (pieceColor == Color.White)
             {
                 //Handle the normal movement of a pawn
-                int ind = 8 *( _row-1) + _col ;
+                int ind = 8 * (_row - 1) + _col;
                 if (_row != 0 && PieceType.GetPiece(_currentState.gameState[ind]) == Piece.Empty)
                 {
                     finalList.Add(new Position(_row - 1, _col));
                     ind = 8 * (_row - 2) + _col;
-                    if(_row==6 && PieceType.GetPiece(_currentState.gameState[ind]) == Piece.Empty)
+                    if (_row == 6 && PieceType.GetPiece(_currentState.gameState[ind]) == Piece.Empty)
                     {
                         finalList.Add(new Position(_row - 2, _col));
                     }
@@ -85,25 +80,25 @@ namespace myChess.Resources.Classes
                 //Handle the case when we have to capture 
                 int ind1 = 8 * (_row - 1) + _col - 1;
                 int ind2 = 8 * (_row - 1) + _col + 1;
-                if(_row!=0 && _col>0 && _col < 7)
+                if (_row != 0 && _col > 0 && _col < 7)
                 {
                     if (PieceType.GetColor(_currentState.gameState[ind1]) == Color.Black)
                     {
                         finalList.Add(new Position(_row - 1, _col - 1));
                     }
-                    if(PieceType.GetColor(_currentState.gameState[ind2]) == Color.Black)
+                    if (PieceType.GetColor(_currentState.gameState[ind2]) == Color.Black)
                     {
                         finalList.Add(new Position(_row - 1, _col + 1));
                     }
                 }
-                else if (_row!=0 && _col == 0)
+                else if (_row != 0 && _col == 0)
                 {
                     if (PieceType.GetColor(_currentState.gameState[ind2]) == Color.Black)
                     {
                         finalList.Add(new Position(_row - 1, _col + 1));
                     }
                 }
-                else if(_row != 0 && _col == 7)
+                else if (_row != 0 && _col == 7)
                 {
                     if (PieceType.GetColor(_currentState.gameState[ind1]) == Color.Black)
                     {
@@ -146,7 +141,7 @@ namespace myChess.Resources.Classes
                         finalList.Add(new Position(_row + 1, _col + 1));
                     }
                 }
-                else if (_row!=7 && _col == 7)
+                else if (_row != 7 && _col == 7)
                 {
                     if (PieceType.GetColor(_currentState.gameState[ind1]) == Color.White)
                     {
@@ -260,15 +255,15 @@ namespace myChess.Resources.Classes
             int[] rowOffsets = { 1, 1, 1, -1, -1, -1, 1, 0, -1, 1, 0, -1 };
             int[] colOffsets = { -1, 0, 1, -1, 0, 1, +1, +1, +1, -1, -1, -1 };
 
-            for(int i=0; i<12; i++)
+            for (int i = 0; i < 12; i++)
             {
                 int newRow = _row + rowOffsets[i];
                 int newCol = _col + colOffsets[i];
 
-                if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
                 {
                     int newIndex = newRow * 8 + newCol;
-                    if (PieceType.GetColor(_currentState.gameState[newIndex])!= thisColor)
+                    if (PieceType.GetColor(_currentState.gameState[newIndex]) != thisColor)
                     {
                         finalList.Add(new Position(newRow, newCol));
                     }

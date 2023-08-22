@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace myChess.Resources.Classes
+﻿namespace myChess.Resources.Classes
 {
     public struct Position
     {
@@ -52,7 +45,9 @@ namespace myChess.Resources.Classes
         BlackKnight = Piece.Knight | Color.Black,
         BlackBishop = Piece.Bishop | Color.Black,
         BlackRook = Piece.Rook | Color.Black,
-        BlackQueen = Piece.Queen | Color.Black
+        BlackQueen = Piece.Queen | Color.Black,
+
+        None = Piece.Empty | Color.NoCol,
     }
 
 

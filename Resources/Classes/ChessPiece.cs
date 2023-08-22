@@ -4,7 +4,7 @@ namespace myChess.Resources.Classes
     public class ChessPiece
     {
         public string WhiteKing { get; set; } = "/Resources/Images/WKing.png";
-        public string WhiteQueen{ get; set; } = "/Resources/Images/WQueen.png";
+        public string WhiteQueen { get; set; } = "/Resources/Images/WQueen.png";
         public string WhiteBishop { get; set; } = "/Resources/Images/WBishop.png";
         public string WhiteKnight { get; set; } = "/Resources/Images/WKnight.png";
         public string WhiteRook { get; set; } = "/Resources/Images/WRook.png";

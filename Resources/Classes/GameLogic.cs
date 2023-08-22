@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace myChess.Resources.Classes
 {
@@ -30,7 +26,7 @@ namespace myChess.Resources.Classes
 
         public Color GetPieceColor(int row, int column)
         {
-            int newIndex = 8*row + column;
+            int newIndex = 8 * row + column;
             return PieceType.GetColor(_gameState.gameState[newIndex]);
         }
 
@@ -40,7 +36,7 @@ namespace myChess.Resources.Classes
             int targetIndex = 8 * targetPosition.X + targetPosition.Y;
 
             _gameState.gameState[targetIndex] = _gameState.gameState[sourceIndex];
-            _gameState.gameState[sourceIndex] = PieceType.CreatePiece(Piece.Empty , Color.NoCol);
+            _gameState.gameState[sourceIndex] = PieceType.CreatePiece(Piece.Empty, Color.NoCol);
         }
     }
 }

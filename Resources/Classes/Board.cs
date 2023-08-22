@@ -1,6 +1,5 @@
 ﻿using myChess.Resources.Classes;
 using System;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -18,7 +17,7 @@ namespace myChess
         public Board(Grid grid, SolidColorBrush lightSquareBrush, SolidColorBrush darkColorBrush)
         {
             _grid = grid;
-            
+
             _lightSquareColor = lightSquareBrush;
             _darkSquareColor = darkColorBrush;
         }

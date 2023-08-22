@@ -1,8 +1,5 @@
-﻿using myChess.Resources.Classes;
-using myChess;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -135,7 +132,7 @@ namespace myChess.Resources.Classes
                 int sourceRow = Grid.GetRow(sourceImage);
                 int sourceCol = Grid.GetColumn(sourceImage);
 
-               
+
                 Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
 
                 // If there's an opponent's piece at the target position, remove it
@@ -184,7 +181,7 @@ namespace myChess.Resources.Classes
             _board._grid.Children.Remove(clickedImage);
             _board._grid.Children.Add(clickedImage);
 
-            HighlightingSquare = _gameLogic.GetLegalMoves(Inrow,Incol);
+            HighlightingSquare = _gameLogic.GetLegalMoves(Inrow, Incol);
 
 
             foreach (Position square in HighlightingSquare)

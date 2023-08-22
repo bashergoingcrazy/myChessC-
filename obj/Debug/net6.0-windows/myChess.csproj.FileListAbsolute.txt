@@ -1,8 +1,3 @@
-C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.exe
-C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.deps.json
-C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.runtimeconfig.json
-C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.dll
-C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.pdb
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess.csproj.AssemblyReference.cache
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\Dictonaries\colors.baml
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\Dictonaries\smoothButtons.baml
@@ -10,6 +5,11 @@ C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\MainWindow.g.cs
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\App.g.cs
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess_MarkupCompile.cache
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess_MarkupCompile.lref
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.exe
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.deps.json
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.runtimeconfig.json
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.dll
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\myChess.pdb
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\App.baml
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\MainWindow.baml
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess.g.resources

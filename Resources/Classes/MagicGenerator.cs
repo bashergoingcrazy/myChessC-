@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.RightsManagement;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace myChess.Resources.Classes
+﻿namespace myChess.Resources.Classes
 {
     public class MagicGenerator
     {
@@ -29,7 +21,7 @@ namespace myChess.Resources.Classes
 
 
 
-        
+
 
 
 
@@ -39,10 +31,10 @@ namespace myChess.Resources.Classes
         public ulong get_random_U64_numbers()
         {
             ulong n1, n2, n3, n4;
-            n1 = ((ulong) get_random_number()) & 0xFFFF;
-            n2 = ((ulong) get_random_number()) & 0xFFFF;
-            n3 = ((ulong) get_random_number()) & 0xFFFF;
-            n4 = ((ulong) get_random_number()) & 0xFFFF; 
+            n1 = ((ulong)get_random_number()) & 0xFFFF;
+            n2 = ((ulong)get_random_number()) & 0xFFFF;
+            n3 = ((ulong)get_random_number()) & 0xFFFF;
+            n4 = ((ulong)get_random_number()) & 0xFFFF;
 
             return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
         }
