@@ -246,6 +246,72 @@ namespace myChess.Resources.Classes
                 }
                 
             }
+            if(flag == 2)
+            {
+                popthebit(SP, SourceSquare);
+                setthebit(SP, TargetSquare);
+                if(sourceColor == Color.White)
+                {
+                    poptheObit(Side.White, SourceSquare);
+                    settheObit(Side.White, TargetSquare);
+                    popthebit(CombinedPiece.BlackPawn, TargetSquare + 8);
+                    poptheObit(Side.Black, TargetSquare + 8);
+                }
+                else
+                {
+                    poptheObit(Side.Black, SourceSquare);
+                    settheObit(Side.Black, TargetSquare);
+                    popthebit(CombinedPiece.WhitePawn, TargetSquare - 8);
+                    poptheObit(Side.White, TargetSquare - 8);
+                }
+            }
+            if (flag == 3)
+            {
+                popthebit(SP, SourceSquare);
+                setthebit(SP, TargetSquare);
+                if(sourceColor == Color.White)
+                {
+                    poptheObit(Side.White, SourceSquare);
+                    settheObit(Side.White, TargetSquare);
+                    if(TargetSquare == (int)Square.g1)
+                    {
+                        popthebit(CombinedPiece.WhiteRook, (int)Square.h1);
+                        poptheObit(Side.White, (int)Square.h1);
+                        setthebit(CombinedPiece.WhiteRook, (int)Square.f1);
+                        settheObit(Side.White, (int)Square.f1);
+                    }
+                    if(TargetSquare == (int)Square.c1)
+                    {
+                        popthebit(CombinedPiece.WhiteRook, (int)Square.a1);
+                        poptheObit(Side.White, (int)Square.a1);
+                        setthebit(CombinedPiece.WhiteRook, (int)Square.d1);
+                        settheObit(Side.White, (int)Square.d1);
+                    }
+                }
+                else
+                {
+                    poptheObit(Side.Black, SourceSquare);
+                    settheObit(Side.Black, TargetSquare);
+                    if (TargetSquare == (int)Square.g8)
+                    {
+                        popthebit(CombinedPiece.BlackRook, (int)Square.h8);
+                        poptheObit(Side.Black, (int)Square.h8);
+                        setthebit(CombinedPiece.BlackRook, (int)Square.f8);
+                        settheObit(Side.Black, (int)Square.f8);
+                    }
+                    if (TargetSquare == (int)Square.c8)
+                    {
+                        popthebit(CombinedPiece.BlackRook, (int)Square.a8);
+                        poptheObit(Side.Black, (int)Square.a8);
+                        setthebit(CombinedPiece.BlackRook, (int)Square.d8);
+                        settheObit(Side.Black, (int)Square.d8);
+                    }
+                }
+            }
+
+
+
+
             Occupancies[(int)Side.Both] = Occupancies[(int)Side.White] | Occupancies[(int)Side.Black];
         }
 

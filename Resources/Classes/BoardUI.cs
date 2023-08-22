@@ -149,7 +149,7 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(targetRow *8 + targetCol, 0);
+                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow *8 + targetCol, 0);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
             }
 
@@ -172,7 +172,7 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 10);
+                _moveGen.UpdateGameAsync(Inrow*8+Incol,targetRow * 8 + targetCol, 10);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
             }
 
@@ -213,7 +213,7 @@ namespace myChess.Resources.Classes
                 _board._grid.Children.Add(newImage);
                 //Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 1);
+                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, + targetCol, 1);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
             }
             if (HighlightingSquare.EnpSquares.Contains(targetPosition))
@@ -248,10 +248,87 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 2);
+                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow * 8 + targetCol, 2);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
             }
+            if (HighlightingSquare.CastlingSquares.Contains(targetPosition))
+            {
+                
 
+                
+                //Handling Movemen and Switching of rooks 
+                int sq = targetRow* 8 + targetCol;
+                if(sq == (int)Square.g1)
+                {
+                    Image targetImage = FindImageAtPosition(targetRow , targetCol+1);
+
+                    if (targetImage != null)
+                    {
+                        _board._grid.Children.Remove(targetImage);
+                        Grid.SetRow(targetImage, targetRow);
+                        Grid.SetColumn(targetImage, targetCol-1);
+                        _board._grid.Children.Add(targetImage);
+                    }
+                }
+
+                else if(sq == (int)Square.c1)
+                {
+                    Image targetImage = FindImageAtPosition(targetRow, targetCol - 2);
+
+                    if (targetImage != null)
+                    {
+                        _board._grid.Children.Remove(targetImage);
+                        Grid.SetRow(targetImage, targetRow);
+                        Grid.SetColumn(targetImage, targetCol + 1);
+                        _board._grid.Children.Add(targetImage);
+                    }
+                }
+                else if(sq == (int)Square.g8)
+                {
+                    Image targetImage = FindImageAtPosition(targetRow, targetCol + 1);
+
+                    if (targetImage != null)
+                    {
+                        _board._grid.Children.Remove(targetImage);
+                        Grid.SetRow(targetImage, targetRow);
+                        Grid.SetColumn(targetImage, targetCol - 1);
+                        _board._grid.Children.Add(targetImage);
+                    }
+                }
+                else if (sq == (int)Square.c8)
+                {
+                    Image targetImage = FindImageAtPosition(targetRow, targetCol - 2);
+
+                    if (targetImage != null)
+                    {
+                        _board._grid.Children.Remove(targetImage);
+                        Grid.SetRow(targetImage, targetRow);
+                        Grid.SetColumn(targetImage, targetCol + 1);
+                        _board._grid.Children.Add(targetImage);
+                    }
+                }
+
+                
+
+                // Move the source image to the target position
+                //ChessPiece piece = new ChessPiece();
+                //Image newImage = new Image();
+                //if (_moveGen.PieceColor() == Color.White)
+                //{
+                //    newImage.Source = new BitmapImage(new Uri(piece.WhiteQueen, UriKind.Relative));
+                //}
+                //else
+                //{
+                //    newImage.Source = new BitmapImage(new Uri(piece.BlackQueen, UriKind.Relative));
+                //}
+                Grid.SetRow(sourceImage, targetRow);
+                Grid.SetColumn(sourceImage, targetCol);
+                //_board._grid.Children.Add(newImage);
+                //Position sourcePosition = new Position(Inrow, Incol);
+                // Update the game state to reflect the move
+                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow * 8 + targetCol, 3);
+                //_gameLogic.UpdateState(sourcePosition, targetPosition);
+            }
 
 
 
@@ -327,6 +404,20 @@ namespace myChess.Resources.Classes
             {
                
                 foreach (Position square in HighlightingSquare.EnpSquares)
+                {
+                    int highlightRow = square.X;
+                    int highlightCol = square.Y;
+                    Rectangle cellRectangle = GetRectangleAtPosition(highlightRow, highlightCol); // Implement this method
+                    if (cellRectangle != null)
+                    {
+                        cellRectangle.Fill = Brushes.PeachPuff;
+                    }
+                }
+            }
+            if (HighlightingSquare.CastlingSquares.Count != 0)
+            {
+
+                foreach (Position square in HighlightingSquare.CastlingSquares)
                 {
                     int highlightRow = square.X;
                     int highlightCol = square.Y;

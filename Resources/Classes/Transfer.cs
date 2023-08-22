@@ -10,7 +10,7 @@ namespace myChess.Resources.Classes
     {
         public List<Position> NormalSquares = new List<Position>();
         public List<Position> EnpSquares = new List<Position>();
-        public List<Position> CastleSquares = new List<Position>();
+        public List<Position> CastlingSquares = new List<Position>();
         public List<Position> PromotionSquares =  new List<Position>();
         public List<Position> DoublePawnSquares = new List<Position>();
 

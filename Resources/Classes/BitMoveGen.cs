@@ -15,7 +15,7 @@ namespace myChess.Resources.Classes
     {
         int SourceSquare,TargetSquare;
         CombinedPiece SourcePiece,TargetPiece;
-
+        Color currentColor;
         bool EnpFlag = false;
         BitGameState currState;
         AttackTables AtkTables;
@@ -32,9 +32,9 @@ namespace myChess.Resources.Classes
             return await Task.Run(() => GetLegalMoves(row, file));
         }
 
-        public async Task UpdateGameAsync(int targetSquare, int flag)
+        public async Task UpdateGameAsync(int sourceSquare ,int targetSquare, int flag)
         {
-            await Task.Run(() => UpdateGame(targetSquare, flag));
+            await Task.Run(() => UpdateGame(sourceSquare,targetSquare, flag));
         }
 
 
@@ -75,14 +75,19 @@ namespace myChess.Resources.Classes
                     handle_pawn(ref result, SourcePiece);
                     break;
                 case Piece.Bishop:
+                    handle_bishops(ref result, SourcePiece);
                     break;
                 case Piece.Queen:
+                    handle_queens(ref result, SourcePiece);
                     break;
                 case Piece.Knight:
+                    handle_knights(ref result, SourcePiece);
                     break;
                 case Piece.King:
+                    handle_kings(ref result, SourcePiece);
                     break;
                 case Piece.Rook:
+                    handle_rooks(ref result, SourcePiece);
                     break;
                 case Piece.Empty:
                     break;
@@ -94,13 +99,198 @@ namespace myChess.Resources.Classes
         }
 
 
-       
+        private void handle_kings(ref Transfer result, CombinedPiece piece)
+        {
+            //Handle the pin 
+            //to be done 
+
+            Debug.WriteLine(currState.CastlingRights);
+            Color pieceColor = PieceType.GetColor((int)piece);
+            ulong res = AtkTables.king_attacks[SourceSquare];
+            ulong occ = currState.Occupancies[(int)Side.Both];
+            if (pieceColor == Color.White)
+            {
+                res &= ~currState.Occupancies[(int)Side.White];
+                while (res > 0)
+                {
+                    int lsb = BitBoard.get_lsb_index(res);
+                    if (is_square_attacked(lsb, (int)Side.Black) == 0)
+                    {
+                        int row = lsb / 8;
+                        int col = lsb % 8;
+                        result.NormalSquares.Add(new Position(row, col));
+                    }
+                    BitBoard.pop_bit(ref res, lsb);               
+                }
+
+                //Handle castling  
+                
+                if ((currState.CastlingRights & 1) != 0)
+                {
+                    if (BitBoard.get_bit(occ, (int)Square.f1) == 0 && BitBoard.get_bit(occ, (int)Square.g1) == 0 && is_square_attacked((int)Square.f1, (int)Side.Black) == 0 && is_square_attacked((int)Square.g1, (int)Side.Black) == 0)
+                    {
+                        int square = (int)Square.g1;
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.CastlingSquares.Add(new Position(row, col));
+                    }
+                }
+                if ((currState.CastlingRights & 2) != 0)
+                {
+                    if (BitBoard.get_bit(occ, (int)Square.d1) == 0 && BitBoard.get_bit(occ, (int)Square.c1) == 0 && is_square_attacked((int)Square.d1, (int)Side.Black) == 0 && is_square_attacked((int)Square.c1, (int)Side.Black) == 0)
+                    {
+                        int square = (int)Square.c1;
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.CastlingSquares.Add(new Position(row, col));
+                    }
+                }
+            }
+            else
+            {
+                res &= ~currState.Occupancies[(int)Side.Black];
+                while (res > 0)
+                {
+                    int lsb = BitBoard.get_lsb_index(res);
+                    if (is_square_attacked(lsb, (int)Side.White) == 0)
+                    {
+                        int row = lsb / 8;
+                        int col = lsb % 8;
+                        result.NormalSquares.Add(new Position(row, col));
+                    }
+                    BitBoard.pop_bit(ref res, lsb);
+                }
+                if ((currState.CastlingRights & 4) != 0)
+                {
+                    if (BitBoard.get_bit(occ, (int)Square.f8) == 0 && BitBoard.get_bit(occ, (int)Square.g8) == 0 && is_square_attacked((int)Square.f8, (int)Side.White) == 0 && is_square_attacked((int)Square.g8, (int)Side.White) == 0)
+                    {
+                        int square = (int)Square.g8;
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.CastlingSquares.Add(new Position(row, col));
+                    }
+                }
+                if ((currState.CastlingRights & 8) != 0)
+                {
+                    if (BitBoard.get_bit(occ, (int)Square.d8) == 0 && BitBoard.get_bit(occ, (int)Square.c8) == 0 && is_square_attacked((int)Square.d8, (int)Side.White) == 0 && is_square_attacked((int)Square.c8, (int)Side.White) == 0)
+                    {
+                        int square = (int)Square.c8;
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.CastlingSquares.Add(new Position(row, col));
+                    }
+                }
+            }            
+        }
+
+
+        private void handle_queens(ref Transfer result, CombinedPiece piece)
+        {
+            //Handle the pin 
+            //To be done
+            Color pieceColor = PieceType.GetColor((int)piece);
+            ulong res = AtkTables.get_queen_attacks(SourceSquare, currState.Occupancies[(int)Side.Both]);
+
+            if (pieceColor == Color.White)
+            {
+                res &= ~currState.Occupancies[(int)Side.White];
+            }
+            else
+            {
+                res &= ~currState.Occupancies[(int)Side.Black];
+            }
+            while (res > 0)
+            {
+                int lsb = BitBoard.get_lsb_index(res);
+                int row = lsb / 8;
+                int col = lsb % 8;
+                result.NormalSquares.Add(new Position(row, col));
+                BitBoard.pop_bit(ref res, lsb);
+            }
+        }
+
+        private void handle_rooks(ref Transfer result, CombinedPiece piece)
+        {
+            //Handle the pin 
+            //To be done
+            Color pieceColor = PieceType.GetColor((int)piece);
+            ulong res = AtkTables.get_rook_attacks(SourceSquare, currState.Occupancies[(int)Side.Both]);
+
+            if(pieceColor == Color.White)
+            {
+                res &= ~currState.Occupancies[(int)Side.White];
+            }
+            else
+            {
+                res &= ~currState.Occupancies[(int)Side.Black];
+            }
+            while (res > 0)
+            {
+                int lsb = BitBoard.get_lsb_index(res);
+                int row = lsb / 8;
+                int col = lsb % 8;
+                result.NormalSquares.Add(new Position(row, col));
+                BitBoard.pop_bit(ref res, lsb);
+            }
+        }
+
+        private void handle_bishops(ref Transfer result, CombinedPiece piece)
+        {
+            //Handle the pin 
+            //To be done 
+            Color pieceColor = PieceType.GetColor((int)piece);
+            ulong res = AtkTables.get_bishop_attacks(SourceSquare, currState.Occupancies[(int)Side.Both]);
+            if(pieceColor == Color.White)
+            {
+                res &= ~currState.Occupancies[(int)Side.White];
+            }
+            else
+            {
+                res &= ~currState.Occupancies[(int)Side.Black];
+            }
+            while (res > 0)
+            {
+                int lsb = BitBoard.get_lsb_index(res);
+                int row = lsb / 8;
+                int col = lsb % 8;
+                result.NormalSquares.Add(new Position(row, col));
+                BitBoard.pop_bit(ref res, lsb);
+            }
+        }
+
+
+        private void handle_knights(ref Transfer result, CombinedPiece piece)
+        {
+            //Handle the pin 
+            //To be done
+            Color pieceColor = PieceType.GetColor((int)piece);
+            ulong res = 0UL;
+            if (pieceColor == Color.White)
+            {
+                res = AtkTables.knight_attacks[SourceSquare] & ~currState.Occupancies[(int)Side.White];
+            }
+            else
+            {
+                res = AtkTables.knight_attacks[SourceSquare] & ~currState.Occupancies[(int)Side.Black];
+            }
+            while (res > 0)
+            {
+                int lsb = BitBoard.get_lsb_index(res);
+                int row = lsb / 8;
+                int col = lsb % 8;
+                result.NormalSquares.Add(new Position(row, col));
+                BitBoard.pop_bit(ref res, lsb);
+            }
+        }
+
+
         private void handle_pawn(ref Transfer result,CombinedPiece piece)
         {
             Color pieceColor = PieceType.GetColor((int)piece);
             ulong allPiece = currState.Occupancies[(int)Side.Both];
 
-            //Handle for pins 
+            //Handle for pins
+            //To be done 
 
             if ( pieceColor == Color.White) 
             {
@@ -137,7 +327,7 @@ namespace myChess.Resources.Classes
                     result.NormalSquares.Add(new Position(row, column));
                     Debug.Write("The State of enp flag: ");
                     Debug.WriteLine(EnpFlag);
-                    if (EnpFlag)
+                    if (EnpFlag && currentColor != PieceType.GetColor((int)SourcePiece))
                     {
                         ulong enpSquare = (1Ul << currState.Enpassant);
                         ulong att = AtkTables.pawn_attacks[(int)Side.White, SourceSquare];
@@ -212,7 +402,7 @@ namespace myChess.Resources.Classes
                     Debug.Write("The State of enp flag: ");
                     Debug.WriteLine(EnpFlag);
 
-                    if (EnpFlag)
+                    if (EnpFlag && currentColor != PieceType.GetColor((int)SourcePiece))
                     {
                         ulong enpSquare = (1Ul << currState.Enpassant);
                         ulong att = AtkTables.pawn_attacks[(int)Side.Black, SourceSquare];
@@ -247,16 +437,14 @@ namespace myChess.Resources.Classes
                     BitBoard.pop_bit(ref attack, square);
                 }
             }
-
-
-
-
-
         }
 
         
 
-        public void UpdateGame(int targetSquare, int flag)
+
+        
+
+        public void UpdateGame(int sourceSquare, int targetSquare, int flag)
         {
             if (EnpFlag)
             {
@@ -270,7 +458,7 @@ namespace myChess.Resources.Classes
             
 
             TargetSquare = targetSquare;
-            currState.UpdateGameState(SourceSquare, TargetSquare, flag);
+            currState.UpdateGameState(sourceSquare, TargetSquare, flag);
             Debug.WriteLine("");
             currState.print_board();
             Debug.WriteLine("White");
@@ -289,6 +477,7 @@ namespace myChess.Resources.Classes
         private void HandleEnp(int sq)
         {
             EnpFlag = true;
+            currentColor = PieceType.GetColor((int)SourcePiece);
             Color colo = PieceType.GetColor((int)SourcePiece);
             if (colo == Color.White)
             {
@@ -385,3 +574,4 @@ namespace myChess.Resources.Classes
         }
     }
 }
+    
