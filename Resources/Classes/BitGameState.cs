@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows;
 
 namespace myChess.Resources.Classes
 {
@@ -119,6 +120,21 @@ namespace myChess.Resources.Classes
             Ascii_Pieces[(int)CombinedPiece.BlackQueen] = 'q';
         }
 
+
+        public CombinedPiece GetPieceAt(int square)
+        {
+            ulong allPiece = Occupancies[(int)Side.Both];
+            foreach (CombinedPiece piece in Enum.GetValues(typeof(CombinedPiece)))
+            {
+                if (BitBoard.get_bit(PieceList[(int)piece], square) != 0)
+                {
+                    return piece;
+                }
+            }
+
+            return CombinedPiece.None;
+        }
+
         public void print_board()
         {
             //loop over the board ranks and file 
@@ -171,6 +187,98 @@ namespace myChess.Resources.Classes
 
             Debug.Write("\n\n");
         }
+        
+        public void UpdateGameState(int SourceSquare, int TargetSquare, int flag)
+        {
+            CombinedPiece SP = GetPieceAt(SourceSquare);
+            CombinedPiece TP = GetPieceAt(TargetSquare);
+            Color sourceColor = PieceType.GetColor((int)SP);
+
+            if (flag == 0 || flag == 10)
+            {
+                popthebit(SP, SourceSquare);
+                setthebit(SP, TargetSquare);
+                if (sourceColor == Color.White)
+                {
+                    poptheObit(Side.White, SourceSquare);
+                    settheObit(Side.White, TargetSquare);
+                    if(TP != CombinedPiece.None)
+                    {
+                        popthebit(TP, TargetSquare);
+                        poptheObit(Side.Black, TargetSquare);
+                    }
+                }
+                else
+                {
+                    poptheObit(Side.Black, SourceSquare);
+                    settheObit(Side.Black, TargetSquare);
+                    if (TP != CombinedPiece.None)
+                    {
+                        popthebit(TP, TargetSquare);
+                        poptheObit(Side.White, TargetSquare);
+                    }
+                }
+            }
+            if(flag == 1)
+            {
+                popthebit(SP, SourceSquare);
+                if (sourceColor == Color.White)
+                {
+                    setthebit(CombinedPiece.WhiteQueen, TargetSquare);
+                    settheObit(Side.White, TargetSquare);
+                    poptheObit(Side.White, SourceSquare);
+                    if(TP != CombinedPiece.None)
+                    {
+                        popthebit(TP, TargetSquare);
+                        poptheObit(Side.Black, TargetSquare);
+                    }
+                }
+                else
+                {
+                    setthebit(CombinedPiece.BlackQueen, TargetSquare);
+                    settheObit(Side.Black, TargetSquare);
+                    poptheObit(Side.Black, SourceSquare);
+                    if (TP != CombinedPiece.None)
+                    {
+                        popthebit(TP, TargetSquare);
+                        poptheObit(Side.White, TargetSquare);
+                    }
+                }
+                
+            }
+            Occupancies[(int)Side.Both] = Occupancies[(int)Side.White] | Occupancies[(int)Side.Black];
+        }
+
+
+        private void setthebit(CombinedPiece pc, int square)
+        {
+            ulong cm = PieceList[(int)pc];
+            BitBoard.set_bit(ref cm, square);
+            PieceList[(int)pc] = cm;
+
+        }
+        private void popthebit(CombinedPiece pc, int square)
+        {
+            ulong cm = PieceList[(int)pc];
+            BitBoard.pop_bit(ref cm, square);
+            PieceList[(int)pc] = cm;
+
+        }
+
+        private void settheObit(Side pc, int square)
+        {
+            ulong cm = Occupancies[(int)pc];
+            BitBoard.set_bit(ref cm, square);
+            Occupancies[(int)pc] = cm;
+        }
+        private void poptheObit(Side pc, int square)
+        {
+            ulong cm = Occupancies[(int)pc];
+            BitBoard.pop_bit(ref cm, square);
+            Occupancies[(int)pc] = cm;
+        }
+
+
 
         private void ClearSquare(int square)
         {

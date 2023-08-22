@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using System.Windows.Documents;
 using System.Xml;
 
@@ -15,7 +16,7 @@ namespace myChess.Resources.Classes
         int SourceSquare,TargetSquare;
         CombinedPiece SourcePiece,TargetPiece;
 
-
+        bool EnpFlag = false;
         BitGameState currState;
         AttackTables AtkTables;
 
@@ -23,8 +24,19 @@ namespace myChess.Resources.Classes
         {
             currState = new BitGameState();  //Don't forget to parse_fen before using this Object or elses errors will happen
             AtkTables = new AttackTables();
-            test();
+            //test();
         }
+
+        public async Task<Transfer> GetLegalMovesAsync(int row, int file)
+        {
+            return await Task.Run(() => GetLegalMoves(row, file));
+        }
+
+        public async Task UpdateGameAsync(int targetSquare, int flag)
+        {
+            await Task.Run(() => UpdateGame(targetSquare, flag));
+        }
+
 
         private void test()
         {
@@ -49,51 +61,253 @@ namespace myChess.Resources.Classes
             Transfer result = new Transfer();
 
             //init squares 
-            int SourceSquare = 8 * row + file;
-            CombinedPiece piece = GetPieceAt(SourceSquare);
-            if (piece == CombinedPiece.None) return result;  //Check if an invalid square is selected by mistake (Shouldn't happen normally)
-            
+            SourceSquare = 8 * row + file;
+            SourcePiece = currState.GetPieceAt(SourceSquare);
+            if (SourcePiece == CombinedPiece.None) return result;  //Check if an invalid square is selected by mistake (Shouldn't happen normally)
+
+            Piece pieceType = PieceType.GetPiece((int)SourcePiece);
+
             //Handle if king is in check to be done
 
+            switch (pieceType)
+            {
+                case Piece.Pawn:
+                    handle_pawn(ref result, SourcePiece);
+                    break;
+                case Piece.Bishop:
+                    break;
+                case Piece.Queen:
+                    break;
+                case Piece.Knight:
+                    break;
+                case Piece.King:
+                    break;
+                case Piece.Rook:
+                    break;
+                case Piece.Empty:
+                    break;
+            }
 
-
-
-
-
-
-
-
+          
 
             return result;
         }
 
 
        
-
-
-
-
-
-
-
-        private CombinedPiece GetPieceAt(int square)
+        private void handle_pawn(ref Transfer result,CombinedPiece piece)
         {
+            Color pieceColor = PieceType.GetColor((int)piece);
             ulong allPiece = currState.Occupancies[(int)Side.Both];
-            foreach(CombinedPiece piece in Enum.GetValues(typeof(CombinedPiece)))
+
+            //Handle for pins 
+
+            if ( pieceColor == Color.White) 
             {
-                if (BitBoard.get_bit(currState.PieceList[(int)piece],square)!=0)
+                //Handle for Promotion
+                if( SourceSquare>=(int)Square.a7 && SourceSquare<= (int)Square.h7)
                 {
-                    return piece;
+                    if ((BitBoard.get_bit(allPiece, SourceSquare - 8)==0))
+                    {
+                        int validSquare = SourceSquare - 8;
+                        int row = validSquare / 8;
+                        int col = validSquare % 8;
+                        result.PromotionSquares.Add(new Position(row, col));
+                    }
+                    ulong attacktt = AtkTables.pawn_attacks[(int)Side.White, SourceSquare];
+                    attacktt &= currState.Occupancies[(int)Side.Black];
+                    while (attacktt > 0)
+                    {
+                        int square = BitBoard.get_lsb_index(attacktt);
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.PromotionSquares.Add(new Position(row, col));
+                        BitBoard.pop_bit(ref attacktt, square);
+                    }
+                    return;
+                }
+
+                //Hanle for single pawn push
+                
+                if((BitBoard.get_bit(allPiece, SourceSquare - 8)) == 0 && ((int)Square.h7 < SourceSquare))
+                {
+                    int validSquare = SourceSquare - 8;
+                    int row = validSquare / 8;
+                    int column = validSquare % 8;
+                    result.NormalSquares.Add(new Position(row, column));
+                    Debug.Write("The State of enp flag: ");
+                    Debug.WriteLine(EnpFlag);
+                    if (EnpFlag)
+                    {
+                        ulong enpSquare = (1Ul << currState.Enpassant);
+                        ulong att = AtkTables.pawn_attacks[(int)Side.White, SourceSquare];
+                        if((enpSquare & att) != 0)
+                        {
+                            int ro = currState.Enpassant / 8;
+                            int co = currState.Enpassant % 8;
+                            result.EnpSquares.Add(new Position(ro, co));
+                        }
+
+                    }
+                    
+                }
+
+                //Handle for Double pawn push
+                if(BitBoard.get_bit(allPiece,SourceSquare-16)==0 && ((int)Square.a2)<=SourceSquare && ((int)Square.h2) >= SourceSquare)
+                {
+                    int validSquare = SourceSquare - 16;
+                    int row = validSquare / 8;
+                    int column = validSquare % 8;
+                    result.DoublePawnSquares.Add(new Position(row, column));
+                }
+
+                //Handle for Captures
+                ulong attack = AtkTables.pawn_attacks[(int)Side.White, SourceSquare];
+                attack &= currState.Occupancies[(int)Side.Black];
+                while (attack > 0)
+                {
+                    int square = BitBoard.get_lsb_index(attack);
+                    int roww = square / 8;
+                    int col = square % 8;
+                    result.NormalSquares.Add(new Position(roww, col));
+                    BitBoard.pop_bit(ref attack, square);
+                }
+
+            }
+            else
+            {
+                //Handle for Promotion
+                if (SourceSquare >= (int)Square.a2 && SourceSquare <= (int)Square.h2)
+                {
+                    if ((BitBoard.get_bit(allPiece, SourceSquare + 8) == 0))
+                    {
+                        int validSquare = SourceSquare + 8;
+                        int row = validSquare / 8;
+                        int col = validSquare % 8;
+                        result.PromotionSquares.Add(new Position(row, col));
+                        
+                    }
+                    ulong attacktt = AtkTables.pawn_attacks[(int)Side.Black, SourceSquare];
+                    attacktt &= currState.Occupancies[(int)Side.White];
+                    while (attacktt > 0)
+                    {
+                        int square = BitBoard.get_lsb_index(attacktt);
+                        int row = square / 8;
+                        int col = square % 8;
+                        result.DoublePawnSquares.Add(new Position(row, col));
+                        BitBoard.pop_bit(ref attacktt, square);
+                    }
+                    return;
+                }
+
+
+
+                //Hanle for single pawn push
+                if ((BitBoard.get_bit(allPiece, SourceSquare + 8)) == 0 && ((int)Square.a2 > SourceSquare))
+                {
+                    int validSquare = SourceSquare + 8;
+                    int row = validSquare / 8;
+                    int column = validSquare % 8;
+                    result.NormalSquares.Add(new Position(row, column));
+                    Debug.Write("The State of enp flag: ");
+                    Debug.WriteLine(EnpFlag);
+
+                    if (EnpFlag)
+                    {
+                        ulong enpSquare = (1Ul << currState.Enpassant);
+                        ulong att = AtkTables.pawn_attacks[(int)Side.Black, SourceSquare];
+                        if ((enpSquare & att) != 0)
+                        {
+                            int ro = currState.Enpassant / 8;
+                            int co = currState.Enpassant % 8;
+                            result.EnpSquares.Add(new Position(ro, co));
+                        }
+
+                    }
+                }
+
+                //Handle for Double pawn push
+                if (BitBoard.get_bit(allPiece, SourceSquare + 16) == 0 && ((int)Square.a7) <= SourceSquare && ((int)Square.h7) >= SourceSquare)
+                {
+                    int validSquare = SourceSquare + 16;
+                    int row = validSquare / 8;
+                    int column = validSquare % 8;
+                    result.DoublePawnSquares.Add(new Position(row, column));
+                }
+                //Handle for Captures
+
+                ulong attack = AtkTables.pawn_attacks[(int)Side.Black, SourceSquare];
+                attack &= currState.Occupancies[(int)Side.White];
+                while (attack > 0)
+                {
+                    int square = BitBoard.get_lsb_index(attack);
+                    int row = square / 8;
+                    int col = square % 8;
+                    result.NormalSquares.Add(new Position(row, col));
+                    BitBoard.pop_bit(ref attack, square);
                 }
             }
 
-            return CombinedPiece.None;
+
+
+
+
+        }
+
+        
+
+        public void UpdateGame(int targetSquare, int flag)
+        {
+            if (EnpFlag)
+            {
+                EnpFlag = false;
+            }
+            if (flag == 10)
+            {
+                HandleEnp(targetSquare);
+            }
+
+            
+
+            TargetSquare = targetSquare;
+            currState.UpdateGameState(SourceSquare, TargetSquare, flag);
+            Debug.WriteLine("");
+            currState.print_board();
+            Debug.WriteLine("White");
+            BitBoard.print_bitboard(currState.Occupancies[(int)Side.White]);
+            Debug.WriteLine("Black");
+            BitBoard.print_bitboard(currState.Occupancies[(int)Side.Black]);
+            Debug.WriteLine("Both");
+            BitBoard.print_bitboard(currState.Occupancies[(int)Side.Both]);
+        }
+
+        public Color PieceColor()
+        {
+            return PieceType.GetColor((int)SourcePiece);
+        }
+
+        private void HandleEnp(int sq)
+        {
+            EnpFlag = true;
+            Color colo = PieceType.GetColor((int)SourcePiece);
+            if (colo == Color.White)
+            {
+                currState.Enpassant = sq + 8;
+            }
+            else
+            {
+                currState.Enpassant = sq - 8;
+            }
+
         }
 
 
 
-
-
+        public void StartNewGame()
+        {
+            currState.parse_fen(Constants.START_POSITION);
+            currState.print_board();
+        }
 
         private int is_Pinned(Side side)
         {

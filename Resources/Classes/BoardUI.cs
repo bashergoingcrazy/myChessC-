@@ -6,6 +6,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using myChess.Resources.Classes;
+
+using System.Windows.Media.Imaging;
 
 
 namespace myChess.Resources.Classes
@@ -19,13 +22,13 @@ namespace myChess.Resources.Classes
         private bool _isDragging = false;
         public Point initialCursor;
         public int Inrow, Incol;
-        private GameLogic _gameLogic;
-        private List<Position> HighlightingSquare;
+        private BitMoveGen _moveGen;
+        private Transfer HighlightingSquare;
 
         public BoardUI(Board board)
         {
             _board = board;
-            _gameLogic = new GameLogic();
+            _moveGen = new BitMoveGen();
             Initialize();
         }
 
@@ -33,7 +36,7 @@ namespace myChess.Resources.Classes
         {
             Type gridType = _board._grid.GetType();
             Debug.WriteLine($"_board._grid is of type: {gridType}");
-            _gameLogic.StartNewGame();
+            _moveGen.StartNewGame();
             _board.InitializeBoard();
             int imageCounter = 1;
 
@@ -127,13 +130,10 @@ namespace myChess.Resources.Classes
             Position targetPosition = new Position(targetRow, targetCol);
 
             // Check if the target position is within the highlighting squares
-            if (HighlightingSquare.Contains(targetPosition))
+            if (HighlightingSquare.NormalSquares.Contains(targetPosition))
             {
-                int sourceRow = Grid.GetRow(sourceImage);
-                int sourceCol = Grid.GetColumn(sourceImage);
-
-
-                Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
+              
+                //Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
 
                 // If there's an opponent's piece at the target position, remove it
                 Image targetImage = FindImageAtPosition(targetRow, targetCol);
@@ -149,8 +149,113 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _gameLogic.UpdateState(sourcePosition, targetPosition);
+                _moveGen.UpdateGameAsync(targetRow *8 + targetCol, 0);
+                //_gameLogic.UpdateState(sourcePosition, targetPosition);
             }
+
+            if (HighlightingSquare.DoublePawnSquares.Contains(targetPosition))
+            {
+
+                //Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
+
+                // If there's an opponent's piece at the target position, remove it
+                Image targetImage = FindImageAtPosition(targetRow, targetCol);
+                if (targetImage != null)
+                {
+                    // Remove the target image from the grid
+                    _board._grid.Children.Remove(targetImage);
+                }
+
+                // Move the source image to the target position
+                Grid.SetRow(sourceImage, targetRow);
+                Grid.SetColumn(sourceImage, targetCol);
+
+                Position sourcePosition = new Position(Inrow, Incol);
+                // Update the game state to reflect the move
+                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 10);
+                //_gameLogic.UpdateState(sourcePosition, targetPosition);
+            }
+
+            if (HighlightingSquare.PromotionSquares.Contains(targetPosition))
+            {
+                //int sourceRow = Grid.GetRow(sourceImage);
+                //int sourceCol = Grid.GetColumn(sourceImage);
+
+                //Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
+
+                // If there's an opponent's piece at the target position, remove it
+                Image targetImage = FindImageAtPosition(targetRow, targetCol);
+                if (targetImage != null)
+                {
+                    // Remove the target image from the grid
+                    _board._grid.Children.Remove(targetImage);
+                }
+
+               
+                if (sourceImage != null)
+                {
+                    _board._grid.Children.Remove(sourceImage);
+                }
+
+                // Move the source image to the target position
+                ChessPiece piece = new ChessPiece();
+                Image newImage = new Image();
+                if (_moveGen.PieceColor() == Color.White)
+                {
+                    newImage.Source = new BitmapImage(new Uri(piece.WhiteQueen, UriKind.Relative));
+                }
+                else
+                {
+                    newImage.Source = new BitmapImage(new Uri(piece.BlackQueen, UriKind.Relative));
+                }
+                Grid.SetRow(newImage, targetRow);
+                Grid.SetColumn(newImage, targetCol);
+                _board._grid.Children.Add(newImage);
+                //Position sourcePosition = new Position(Inrow, Incol);
+                // Update the game state to reflect the move
+                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 1);
+                //_gameLogic.UpdateState(sourcePosition, targetPosition);
+            }
+            if (HighlightingSquare.EnpSquares.Contains(targetPosition))
+            {
+
+                //Color targetPieceColor = _gameLogic.GetPieceColor(targetRow, targetCol);
+
+                // If there's an opponent's piece at the target position, remove it
+
+                if (_moveGen.PieceColor() == Color.White)
+                {
+                    Image targetImage = FindImageAtPosition(targetRow+1, targetCol);
+                    if (targetImage != null)
+                    {
+                        // Remove the target image from the grid
+                        _board._grid.Children.Remove(targetImage);
+                    }
+                }
+                else
+                {
+                    Image targetImage = FindImageAtPosition(targetRow-1, targetCol);
+                    if (targetImage != null)
+                    {
+                        // Remove the target image from the grid
+                        _board._grid.Children.Remove(targetImage);
+                    }
+                }
+
+                // Move the source image to the target position
+                Grid.SetRow(sourceImage, targetRow);
+                Grid.SetColumn(sourceImage, targetCol);
+
+                Position sourcePosition = new Position(Inrow, Incol);
+                // Update the game state to reflect the move
+                _moveGen.UpdateGameAsync(targetRow * 8 + targetCol, 2);
+                //_gameLogic.UpdateState(sourcePosition, targetPosition);
+            }
+
+
+
+
+
             RedrawSquares();
         }
 
@@ -181,20 +286,60 @@ namespace myChess.Resources.Classes
             _board._grid.Children.Remove(clickedImage);
             _board._grid.Children.Add(clickedImage);
 
-            HighlightingSquare = _gameLogic.GetLegalMoves(Inrow, Incol);
+            HandleHighlightingAsync(row, column);
 
+        }
 
-            foreach (Position square in HighlightingSquare)
+        private async void HandleHighlightingAsync(int row, int column)
+        {
+            HighlightingSquare = await _moveGen.GetLegalMovesAsync(row, column);
+
+            if (HighlightingSquare.NormalSquares.Count != 0)
             {
-                int highlightRow = square.X;
-                int highlightCol = square.Y;
-                Rectangle cellRectangle = GetRectangleAtPosition(highlightRow, highlightCol); // Implement this method
-                if (cellRectangle != null)
+                List<Position> combinedSquares = new List<Position>(HighlightingSquare.NormalSquares);
+                combinedSquares.AddRange(HighlightingSquare.DoublePawnSquares);
+                foreach (Position square in combinedSquares)
                 {
-                    cellRectangle.Fill = Brushes.LightBlue;
+                    int highlightRow = square.X;
+                    int highlightCol = square.Y;
+                    Rectangle cellRectangle = GetRectangleAtPosition(highlightRow, highlightCol); // Implement this method
+                    if (cellRectangle != null)
+                    {
+                        cellRectangle.Fill = Brushes.LightBlue;
+                    }
                 }
             }
+            if (HighlightingSquare.PromotionSquares.Count != 0)
+            {
+              
+                foreach (Position square in HighlightingSquare.PromotionSquares)
+                {
+                    int highlightRow = square.X;
+                    int highlightCol = square.Y;
+                    Rectangle cellRectangle = GetRectangleAtPosition(highlightRow, highlightCol); // Implement this method
+                    if (cellRectangle != null)
+                    {
+                        cellRectangle.Fill = Brushes.PeachPuff;
+                    }
+                }
+            }
+            if (HighlightingSquare.EnpSquares.Count != 0)
+            {
+               
+                foreach (Position square in HighlightingSquare.EnpSquares)
+                {
+                    int highlightRow = square.X;
+                    int highlightCol = square.Y;
+                    Rectangle cellRectangle = GetRectangleAtPosition(highlightRow, highlightCol); // Implement this method
+                    if (cellRectangle != null)
+                    {
+                        cellRectangle.Fill = Brushes.PeachPuff;
+                    }
+                }
+            }
+
         }
+      
         private Rectangle GetRectangleAtPosition(int row, int col)
         {
             int index = row * 8 + col; // Calculate the index of the rectangle

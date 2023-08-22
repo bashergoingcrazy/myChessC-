@@ -8,10 +8,11 @@ namespace myChess.Resources.Classes
 {
     public class Transfer
     {
-        public List<Position> NormalSquares;
-        public List<Position> EnpSquares;
-        public List<Position> CastleSquares;
-        public List<Position> PromotionSquares;
+        public List<Position> NormalSquares = new List<Position>();
+        public List<Position> EnpSquares = new List<Position>();
+        public List<Position> CastleSquares = new List<Position>();
+        public List<Position> PromotionSquares =  new List<Position>();
+        public List<Position> DoublePawnSquares = new List<Position>();
 
         
     }
