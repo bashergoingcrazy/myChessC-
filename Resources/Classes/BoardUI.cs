@@ -10,6 +10,8 @@ using myChess.Resources.Classes;
 
 using System.Windows.Media.Imaging;
 using System.Media;
+using System.Linq;
+//using static System.Net.Mime.MediaTypeNames;
 
 namespace myChess.Resources.Classes
 {
@@ -28,6 +30,8 @@ namespace myChess.Resources.Classes
         private bool isInCheck;
         private MediaPlayer captureAudioPlayer;
         private MediaPlayer moveAudioPlayer;
+        bool wantToRotate = true;
+        bool isBoardRotated = false;
 
         public BoardUI(Board board)
         {
@@ -169,6 +173,7 @@ namespace myChess.Resources.Classes
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
                 isInCheck = false;
                 CheckGameEnding();
+
             }
 
             if (HighlightingSquare.DoublePawnSquares.Contains(targetPosition))
@@ -249,6 +254,7 @@ namespace myChess.Resources.Classes
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
                 isInCheck = false;
                 CheckGameEnding();
+   
             }
             if (HighlightingSquare.EnpSquares.Contains(targetPosition))
             {
@@ -347,6 +353,7 @@ namespace myChess.Resources.Classes
                 }
 
                 PlayMoveSound();
+
 
                 // Move the source image to the target position
                 //ChessPiece piece = new ChessPiece();
@@ -521,6 +528,8 @@ namespace myChess.Resources.Classes
                 moveAudioPlayer.Play();
             }
         }
+
+        
 
         private Rectangle GetRectangleAtPosition(int row, int col)
         {

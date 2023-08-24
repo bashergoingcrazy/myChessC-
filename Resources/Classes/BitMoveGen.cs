@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using System.Windows.Documents;
+using System.Windows.Media;
 using System.Xml;
 
 namespace myChess.Resources.Classes
@@ -21,6 +22,7 @@ namespace myChess.Resources.Classes
         BitGameState currState;
         AttackTables AtkTables;
         Color ToMove = Color.White;
+        
 
         public BitMoveGen()
         {
@@ -114,7 +116,7 @@ namespace myChess.Resources.Classes
             //Handle the pin 
             //to be done 
 
-            Debug.WriteLine(currState.CastlingRights);
+            //Debug.WriteLine(currState.CastlingRights);
             Color pieceColor = PieceType.GetColor((int)piece);
             Side toMove = (pieceColor == Color.White) ? Side.White : Side.Black;
             ulong res = AtkTables.king_attacks[SourceSquare];
@@ -460,8 +462,8 @@ namespace myChess.Resources.Classes
                         result.NormalSquares.Add(new Position(row, col));
                     }
                 }
-                Debug.Write("The State of enp flag: ");
-                Debug.WriteLine(EnpFlag);
+                //Debug.Write("The State of enp flag: ");
+                //Debug.WriteLine(EnpFlag);
                 if (EnpFlag && currentColor != PieceType.GetColor((int)SourcePiece))
                 {
                     ulong enpSquare = (1Ul << currState.Enpassant);
@@ -711,6 +713,7 @@ namespace myChess.Resources.Classes
         public void UpdateGame(int sourceSquare, int targetSquare, int flag)
         {
             //Debug.WriteLine(ToMove);
+
             ToMove = (ToMove == Color.White) ? Color.Black : Color.White;
             if (EnpFlag)
             {
@@ -738,6 +741,8 @@ namespace myChess.Resources.Classes
             //Debug.WriteLine("SP: " + BitBoard.square_to_coordinates(sourceSquare) + " TP: " + BitBoard.square_to_coordinates(targetSquare));
         }
 
+        
+
         public Color PieceColor()
         {
             return PieceType.GetColor((int)SourcePiece);
@@ -756,8 +761,8 @@ namespace myChess.Resources.Classes
             {
                 currState.Enpassant = sq - 8;
             }
-
         }
+
 
         private void HandleCastlingRights(int sourceSquare)
         {
