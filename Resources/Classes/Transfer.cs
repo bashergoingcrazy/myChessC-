@@ -14,6 +14,10 @@ namespace myChess.Resources.Classes
         public List<Position> PromotionSquares =  new List<Position>();
         public List<Position> DoublePawnSquares = new List<Position>();
 
-        
+        public bool is_Empty()
+        {
+            if (NormalSquares.Count == 0 && EnpSquares.Count == 0 && CastlingSquares.Count == 0 && PromotionSquares.Count == 0 && DoublePawnSquares.Count == 0) return true;
+            return false;
+        }
     }
 }

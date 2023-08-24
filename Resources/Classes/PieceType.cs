@@ -1,4 +1,6 @@
-﻿namespace myChess.Resources.Classes
+﻿using System.Windows.Navigation;
+
+namespace myChess.Resources.Classes
 {
     public struct Position
     {
@@ -66,6 +68,10 @@
         public static Color GetColor(int combinedValue)
         {
             return (Color)(combinedValue & 0b00111000);
+        }
+        public static Color GetOppositeColor(Color color)
+        {
+            return (color == Color.White) ? Color.Black : Color.White;
         }
     }
 

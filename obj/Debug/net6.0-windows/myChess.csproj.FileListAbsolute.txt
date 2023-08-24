@@ -22,3 +22,6 @@ C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\refint\myChess.dll
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess.pdb
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess.genruntimeconfig.cache
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\ref\myChess.dll
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess_Content.g.cs
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\capture.mp3
+C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\move-self.mp3

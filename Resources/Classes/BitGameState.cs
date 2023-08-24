@@ -11,7 +11,7 @@ namespace myChess.Resources.Classes
         wk = 1, wq = 2,
         bk = 4, bq = 8,
     }
-    public class BitGameState
+    public class BitGameState: ICloneable
     {
         public Dictionary<int, ulong> PieceList = new Dictionary<int, ulong>();
         public Dictionary<int, ulong> Occupancies = new Dictionary<int, ulong>();
@@ -26,6 +26,21 @@ namespace myChess.Resources.Classes
         {
             init_Ascii_Pieces();
             //test();
+        }
+
+        public object Clone()
+        {
+            BitGameState clone = new BitGameState
+            {
+                PieceList = new Dictionary<int, ulong>(this.PieceList),
+                Occupancies = new Dictionary<int, ulong>(this.Occupancies),
+                Ascii_Pieces = new Dictionary<int, Char>(this.Ascii_Pieces),
+                SideToMove = this.SideToMove,
+                Enpassant = this.Enpassant,
+                CastlingRights = this.CastlingRights
+            };
+
+            return clone;
         }
 
         private void test()
@@ -123,7 +138,7 @@ namespace myChess.Resources.Classes
 
         public CombinedPiece GetPieceAt(int square)
         {
-            ulong allPiece = Occupancies[(int)Side.Both];
+          
             foreach (CombinedPiece piece in Enum.GetValues(typeof(CombinedPiece)))
             {
                 if (BitBoard.get_bit(PieceList[(int)piece], square) != 0)
@@ -193,6 +208,7 @@ namespace myChess.Resources.Classes
             CombinedPiece SP = GetPieceAt(SourceSquare);
             CombinedPiece TP = GetPieceAt(TargetSquare);
             Color sourceColor = PieceType.GetColor((int)SP);
+            
 
             if (flag == 0 || flag == 10)
             {
@@ -222,19 +238,21 @@ namespace myChess.Resources.Classes
             if(flag == 1)
             {
                 popthebit(SP, SourceSquare);
+               
                 if (sourceColor == Color.White)
                 {
                     setthebit(CombinedPiece.WhiteQueen, TargetSquare);
                     settheObit(Side.White, TargetSquare);
                     poptheObit(Side.White, SourceSquare);
-                    if(TP != CombinedPiece.None)
+                    if (TP != CombinedPiece.None)
                     {
                         popthebit(TP, TargetSquare);
                         poptheObit(Side.Black, TargetSquare);
                     }
                 }
-                else
+                else if (sourceColor == Color.Black) 
                 {
+                    
                     setthebit(CombinedPiece.BlackQueen, TargetSquare);
                     settheObit(Side.Black, TargetSquare);
                     poptheObit(Side.Black, SourceSquare);

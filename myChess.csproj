@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="capture.mp3" />
+    <None Remove="move-self.mp3" />
     <None Remove="Resources\Images\BBishop.png" />
     <None Remove="Resources\Images\BKing.png" />
     <None Remove="Resources\Images\BKnight.png" />
@@ -23,6 +25,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="capture.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="move-self.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Resource Include="Resources\Images\BBishop.png" />
     <Resource Include="Resources\Images\BKing.png" />
     <Resource Include="Resources\Images\BKnight.png" />

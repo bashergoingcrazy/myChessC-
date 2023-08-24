@@ -9,7 +9,7 @@ using System.Windows.Shapes;
 using myChess.Resources.Classes;
 
 using System.Windows.Media.Imaging;
-
+using System.Media;
 
 namespace myChess.Resources.Classes
 {
@@ -24,12 +24,21 @@ namespace myChess.Resources.Classes
         public int Inrow, Incol;
         private BitMoveGen _moveGen;
         private Transfer HighlightingSquare;
+        private Position CheckSquares;
+        private bool isInCheck;
+        private MediaPlayer captureAudioPlayer;
+        private MediaPlayer moveAudioPlayer;
 
         public BoardUI(Board board)
         {
             _board = board;
             _moveGen = new BitMoveGen();
             Initialize();
+            captureAudioPlayer = new MediaPlayer();
+            captureAudioPlayer.Open(new Uri("pack://siteoforigin:,,,/capture.mp3"));
+
+            moveAudioPlayer = new MediaPlayer();
+            moveAudioPlayer.Open(new Uri("pack://siteoforigin:,,,/move-self.mp3"));
         }
 
         public void Initialize()
@@ -127,6 +136,8 @@ namespace myChess.Resources.Classes
 
         private void HandleDrop(Image sourceImage, int targetRow, int targetCol)
         {
+           
+            
             Position targetPosition = new Position(targetRow, targetCol);
 
             // Check if the target position is within the highlighting squares
@@ -141,6 +152,11 @@ namespace myChess.Resources.Classes
                 {
                     // Remove the target image from the grid
                     _board._grid.Children.Remove(targetImage);
+                    PlayCaptureSound();
+                }
+                else
+                {
+                    PlayMoveSound();
                 }
 
                 // Move the source image to the target position
@@ -149,8 +165,10 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow *8 + targetCol, 0);
+                _moveGen.UpdateGame(Inrow * 8 + Incol, targetRow *8 + targetCol, 0);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
+                isInCheck = false;
+                CheckGameEnding();
             }
 
             if (HighlightingSquare.DoublePawnSquares.Contains(targetPosition))
@@ -172,8 +190,12 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(Inrow*8+Incol,targetRow * 8 + targetCol, 10);
+                _moveGen.UpdateGame(Inrow*8+Incol,targetRow * 8 + targetCol, 10);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
+                isInCheck = false;
+                PlayMoveSound();
+                CheckGameEnding();
+
             }
 
             if (HighlightingSquare.PromotionSquares.Contains(targetPosition))
@@ -202,19 +224,31 @@ namespace myChess.Resources.Classes
                 Image newImage = new Image();
                 if (_moveGen.PieceColor() == Color.White)
                 {
-                    newImage.Source = new BitmapImage(new Uri(piece.WhiteQueen, UriKind.Relative));
+                    newImage.Source = new BitmapImage(new Uri(piece.WhiteQueen, UriKind.Relative)); 
+                    newImage.MouseDown += HandleMouseDown;
+                    newImage.MouseMove += HandleMouseMove;
+
+                    newImage.MouseUp += HandleMouseUp;
                 }
                 else
                 {
                     newImage.Source = new BitmapImage(new Uri(piece.BlackQueen, UriKind.Relative));
+                    newImage.MouseDown += HandleMouseDown;
+
+                    newImage.MouseMove += HandleMouseMove;
+
+                    newImage.MouseUp += HandleMouseUp;
                 }
+                PlayMoveSound();
                 Grid.SetRow(newImage, targetRow);
                 Grid.SetColumn(newImage, targetCol);
                 _board._grid.Children.Add(newImage);
                 //Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, + targetCol, 1);
+                _moveGen.UpdateGame(Inrow * 8 + Incol, targetRow*8 + targetCol, 1);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
+                isInCheck = false;
+                CheckGameEnding();
             }
             if (HighlightingSquare.EnpSquares.Contains(targetPosition))
             {
@@ -241,6 +275,7 @@ namespace myChess.Resources.Classes
                         _board._grid.Children.Remove(targetImage);
                     }
                 }
+                PlayCaptureSound();
 
                 // Move the source image to the target position
                 Grid.SetRow(sourceImage, targetRow);
@@ -248,8 +283,10 @@ namespace myChess.Resources.Classes
 
                 Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow * 8 + targetCol, 2);
+                _moveGen.UpdateGame(Inrow * 8 + Incol, targetRow * 8 + targetCol, 2);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
+                isInCheck = false;
+                CheckGameEnding();
             }
             if (HighlightingSquare.CastlingSquares.Contains(targetPosition))
             {
@@ -306,9 +343,10 @@ namespace myChess.Resources.Classes
                         Grid.SetColumn(targetImage, targetCol + 1);
                         _board._grid.Children.Add(targetImage);
                     }
+                    
                 }
 
-                
+                PlayMoveSound();
 
                 // Move the source image to the target position
                 //ChessPiece piece = new ChessPiece();
@@ -326,14 +364,13 @@ namespace myChess.Resources.Classes
                 //_board._grid.Children.Add(newImage);
                 //Position sourcePosition = new Position(Inrow, Incol);
                 // Update the game state to reflect the move
-                _moveGen.UpdateGameAsync(Inrow * 8 + Incol, targetRow * 8 + targetCol, 3);
+                _moveGen.UpdateGame(Inrow * 8 + Incol, targetRow * 8 + targetCol, 3);
                 //_gameLogic.UpdateState(sourcePosition, targetPosition);
+                isInCheck = false;
+                CheckGameEnding();
             }
-
-
-
-
             RedrawSquares();
+            
         }
 
         private void RedrawSquares()
@@ -352,9 +389,45 @@ namespace myChess.Resources.Classes
                     }
                 }
             }
+            if (isInCheck)
+            {
+                Rectangle square = GetRectangleAtPosition(CheckSquares.X, CheckSquares.Y);
+                if (square != null)
+                {
+                    square.Fill = Brushes.Red;
+                }
+            }
+            
         }
 
+        private void CheckGameEnding()
+        {
+            Position checker =  _moveGen.CheckGameEnd();
+            if (checker.X != -1)
+            {
+                if(checker.X == 99)
+                {
+                    MessageBox.Show("Stalemate Draw");
+                }
 
+
+                if (checker.X == 100)
+                {
+                    Side winner = ((int)Side.White == checker.Y) ? Side.Black : Side.White;
+                    MessageBox.Show(winner + "Won");
+                }
+
+
+                CheckSquares = checker;
+                Rectangle square = GetRectangleAtPosition(checker.X, checker.Y);
+                if (square != null)
+                {
+                    square.Fill = Brushes.Red;
+                    isInCheck = true;
+                }
+            }
+            
+        }
 
         public void HandleHighlighting(Image clickedImage)
         {
@@ -370,11 +443,10 @@ namespace myChess.Resources.Classes
         private async void HandleHighlightingAsync(int row, int column)
         {
             HighlightingSquare = await _moveGen.GetLegalMovesAsync(row, column);
-
-            if (HighlightingSquare.NormalSquares.Count != 0)
+            List<Position> combinedSquares = new List<Position>(HighlightingSquare.NormalSquares);
+            combinedSquares.AddRange(HighlightingSquare.DoublePawnSquares);
+            if (combinedSquares.Count != 0)
             {
-                List<Position> combinedSquares = new List<Position>(HighlightingSquare.NormalSquares);
-                combinedSquares.AddRange(HighlightingSquare.DoublePawnSquares);
                 foreach (Position square in combinedSquares)
                 {
                     int highlightRow = square.X;
@@ -430,7 +502,26 @@ namespace myChess.Resources.Classes
             }
 
         }
-      
+
+        private void PlayCaptureSound()
+        {
+            if(captureAudioPlayer != null)
+            {
+                captureAudioPlayer.Stop();
+                captureAudioPlayer.Position = TimeSpan.Zero;
+                captureAudioPlayer.Play();
+            }
+        }
+        private void PlayMoveSound()
+        {
+            if (moveAudioPlayer != null)
+            {
+                moveAudioPlayer.Stop();
+                moveAudioPlayer.Position = TimeSpan.Zero;
+                moveAudioPlayer.Play();
+            }
+        }
+
         private Rectangle GetRectangleAtPosition(int row, int col)
         {
             int index = row * 8 + col; // Calculate the index of the rectangle
