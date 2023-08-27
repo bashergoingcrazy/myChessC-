@@ -26,6 +26,13 @@ namespace myChess.Resources.Classes
         Queen = 6
     }
 
+    public enum Promote
+    {
+        Queen = 1,
+        Rook = 2,
+        Bishop = 3, 
+    }
+
     public enum Color
     {
         NoCol = 0,

@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="myChess.Resources.UserControls.blackPromotions"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:myChess.Resources.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="75">
+    <Grid Background="Gray" Height="300" Width="75">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Button Grid.Row="0" Click="QueenButton_Click">
+            <Image Source="/Resources/Images/BQueen.png" />
+        </Button>
+        <Button Grid.Row="1" Click="RookButton_Click">
+            <Image Source="/Resources/Images/BRook.png" />
+        </Button>
+        <Button Grid.Row="2" Click="BishopButton_Click">
+            <Image Source="/Resources/Images/BBishop.png" />
+        </Button>
+        <Button Grid.Row="3" Click="KnightButton_Click">
+            <Image Source="/Resources/Images/BKnight.png" />
+        </Button>
+    </Grid>
+</UserControl>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 
 namespace myChess.Resources.Classes
 {
@@ -13,10 +14,11 @@ namespace myChess.Resources.Classes
     }
     public class BitGameState: ICloneable
     {
+
         public Dictionary<int, ulong> PieceList = new Dictionary<int, ulong>();
         public Dictionary<int, ulong> Occupancies = new Dictionary<int, ulong>();
         public Dictionary<int, Char> Ascii_Pieces = new Dictionary<int, Char>();
-        public int SideToMove = (int)Side.White;
+        public Side SideToMove = Side.White;
         public int Enpassant = (int)Square.no_sq;
         public int CastlingRights = 0;
 
@@ -133,6 +135,7 @@ namespace myChess.Resources.Classes
             Ascii_Pieces[(int)CombinedPiece.BlackKnight] = 'n';
             Ascii_Pieces[(int)CombinedPiece.BlackKing] = 'k';
             Ascii_Pieces[(int)CombinedPiece.BlackQueen] = 'q';
+            Ascii_Pieces[(int)CombinedPiece.None] = '-';
         }
 
 
@@ -210,7 +213,7 @@ namespace myChess.Resources.Classes
             Color sourceColor = PieceType.GetColor((int)SP);
             
 
-            if (flag == 0 || flag == 10)
+            if (flag == 0 || flag == 4)
             {
                 popthebit(SP, SourceSquare);
                 setthebit(SP, TargetSquare);
@@ -333,15 +336,15 @@ namespace myChess.Resources.Classes
             Occupancies[(int)Side.Both] = Occupancies[(int)Side.White] | Occupancies[(int)Side.Black];
         }
 
-
-        private void setthebit(CombinedPiece pc, int square)
+        
+        public void setthebit(CombinedPiece pc, int square)
         {
             ulong cm = PieceList[(int)pc];
             BitBoard.set_bit(ref cm, square);
             PieceList[(int)pc] = cm;
 
         }
-        private void popthebit(CombinedPiece pc, int square)
+        public void popthebit(CombinedPiece pc, int square)
         {
             ulong cm = PieceList[(int)pc];
             BitBoard.pop_bit(ref cm, square);
@@ -349,13 +352,13 @@ namespace myChess.Resources.Classes
 
         }
 
-        private void settheObit(Side pc, int square)
+        public void settheObit(Side pc, int square)
         {
             ulong cm = Occupancies[(int)pc];
             BitBoard.set_bit(ref cm, square);
             Occupancies[(int)pc] = cm;
         }
-        private void poptheObit(Side pc, int square)
+        public void poptheObit(Side pc, int square)
         {
             ulong cm = Occupancies[(int)pc];
             BitBoard.pop_bit(ref cm, square);
@@ -418,11 +421,11 @@ namespace myChess.Resources.Classes
              
                 if (fenChar == 'w')
                 {
-                    SideToMove = (int)Side.White; break;
+                    SideToMove = Side.White; break;
                 }
                 else
                 {
-                    SideToMove= (int)Side.Black; break;
+                    SideToMove= Side.Black; break;
                 }
                 
             }

@@ -19,7 +19,7 @@ namespace myChess.Resources.Classes
         CombinedPiece SourcePiece,TargetPiece;
         Color currentColor;
         bool EnpFlag = false;
-        BitGameState currState;
+        public BitGameState currState;
         AttackTables AtkTables;
         Color ToMove = Color.White;
         
@@ -28,6 +28,7 @@ namespace myChess.Resources.Classes
         {
             currState = new BitGameState();  //Don't forget to parse_fen before using this Object or elses errors will happen
             AtkTables = new AttackTables();
+            
             //test();
         }
 
@@ -38,22 +39,7 @@ namespace myChess.Resources.Classes
 
        
 
-        public object Clone()
-        {
-            BitMoveGen clone = new BitMoveGen
-            {
-                SourceSquare = this.SourceSquare,
-                TargetSquare = this.TargetSquare,
-                SourcePiece = this.SourcePiece,
-                TargetPiece = this.TargetPiece,
-                currentColor = this.currentColor,
-                EnpFlag = this.EnpFlag,
-                currState = (BitGameState)this.currState.Clone(),
-            };
-
-            return clone;
-        }
-
+        
         private void test()
         {
            
@@ -73,7 +59,8 @@ namespace myChess.Resources.Classes
             Piece pieceType = PieceType.GetPiece((int)SourcePiece);
             if (flag == 0)
             {
-                if(ToMove != PieceType.GetColor((int)SourcePiece))
+                //if Current Side To move is not the selected piece then return 
+                if(currState.SideToMove != ((PieceType.GetColor((int)SourcePiece)==Color.White)?Side.White:Side.Black))
                 {
                     return result;
                 }
@@ -381,7 +368,7 @@ namespace myChess.Resources.Classes
         }
 
 
-        private void handle_pawn(ref Transfer result,CombinedPiece piece)
+        private void handle_pawn(ref Transfer result, CombinedPiece piece)
         {
             Color pieceColor = PieceType.GetColor((int)piece);
             ulong allPiece = currState.Occupancies[(int)Side.Both];
@@ -392,7 +379,7 @@ namespace myChess.Resources.Classes
             //To be done 
             //Debug.Write("Please tell me the source square " + BitBoard.square_to_coordinates(SourceSquare));
 
-            if ( pieceColor == Color.White) 
+            if (pieceColor == Color.White) 
             {
                 //Handle for Promotion
                 if( SourceSquare>=(int)Square.a7 && SourceSquare<= (int)Square.h7)
@@ -464,7 +451,7 @@ namespace myChess.Resources.Classes
                 }
                 //Debug.Write("The State of enp flag: ");
                 //Debug.WriteLine(EnpFlag);
-                if (EnpFlag && currentColor != PieceType.GetColor((int)SourcePiece))
+                if (currState.Enpassant!=(int)Square.no_sq && currentColor != PieceType.GetColor((int)SourcePiece))
                 {
                     ulong enpSquare = (1Ul << currState.Enpassant);
                     ulong att = AtkTables.pawn_attacks[(int)Side.White, SourceSquare];
@@ -482,12 +469,13 @@ namespace myChess.Resources.Classes
                 {
                     int validSquare = SourceSquare - 16;
                     int row = validSquare / 8;
-                    int col = validSquare % 8;
+                    int col = validSquare % 8; 
+
                     // Clone the current BitGameState object
                     BitGameState clonedState = (BitGameState)currState.Clone();
 
                     // Update the cloned state with the new move
-                    clonedState.UpdateGameState(SourceSquare, row * 8 + col, 10);
+                    clonedState.UpdateGameState(SourceSquare, row * 8 + col, 4);
 
                     // Check if the king is in check after the move
                     int kingInCheck = is_King_in_Check(toMove, clonedState);
@@ -595,10 +583,10 @@ namespace myChess.Resources.Classes
                         result.NormalSquares.Add(new Position(row, col));
                     }
                 }
-                Debug.Write("The State of enp flag: ");
-                Debug.WriteLine(EnpFlag);
+                //Debug.Write("The State of enp flag: ");
+                //Debug.WriteLine(EnpFlag);
 
-                if (EnpFlag && currentColor != PieceType.GetColor((int)SourcePiece))
+                if (currState.Enpassant != (int)Square.no_sq && currentColor != PieceType.GetColor((int)SourcePiece))
                 {
                     
                     ulong enpSquare = (1Ul << currState.Enpassant);
@@ -621,7 +609,7 @@ namespace myChess.Resources.Classes
                     BitGameState clonedState = (BitGameState)currState.Clone();
 
                     // Update the cloned state with the new move
-                    clonedState.UpdateGameState(SourceSquare, row * 8 + coll, 10);
+                    clonedState.UpdateGameState(SourceSquare, row * 8 + coll, 4);
 
                     // Check if the king is in check after the move
                     int kingInCheck = is_King_in_Check(toMove, clonedState);
@@ -712,40 +700,75 @@ namespace myChess.Resources.Classes
 
         public void UpdateGame(int sourceSquare, int targetSquare, int flag)
         {
-            //Debug.WriteLine(ToMove);
-
-            ToMove = (ToMove == Color.White) ? Color.Black : Color.White;
-            if (EnpFlag)
+            
+            int captureflag = ((flag & 8) == 8) ? 1 : 0;
+            if(flag < 16) flag &= 7;
+            int castleflag = (flag == 3) ? 1 : 0;
+            int enpflag = (flag == 2) ? 1 : 0;
+            int promoted = (flag == 1 || flag == 5 || flag == 6 || flag == 7) ? 1 : 0;
+            int doublepawnflag = (flag == 4) ? 1 : 0;
+            CombinedPiece promotedPiece = CombinedPiece.None;
+            
+            if(promoted==1)
             {
-                currState.Enpassant = (int)Square.no_sq;
-                EnpFlag = false;
+                switch (flag)
+                {
+                    case (1):
+                        promotedPiece = (currState.SideToMove == Side.White) ? CombinedPiece.WhiteQueen : CombinedPiece.BlackQueen;
+                        break;
+                    case (5):
+                        promotedPiece = (currState.SideToMove == Side.White) ? CombinedPiece.WhiteRook : CombinedPiece.BlackRook;
+                        break;
+                    case (6):
+                        promotedPiece = (currState.SideToMove == Side.White) ? CombinedPiece.WhiteBishop : CombinedPiece.BlackBishop;
+                        break;
+                    case (7):
+                        promotedPiece = (currState.SideToMove == Side.White) ? CombinedPiece.WhiteKnight : CombinedPiece.BlackKnight;
+                        break;
+                }
             }
-            if (flag == 10)
+            int move;
+            if(flag == 32)
             {
-                HandleEnp(targetSquare);
+                move = sourceSquare;  //Note that flag 32 is used for AiMoveGen
             }
+            else
+            {
+                move = Codec.encode_move(sourceSquare, targetSquare, (int)SourcePiece, (int)promotedPiece, captureflag, doublepawnflag, enpflag, castleflag);
 
-            HandleCastlingRights(sourceSquare);
-
-            TargetSquare = targetSquare;
-            currState.UpdateGameState(sourceSquare, targetSquare, flag);
-            //Debug.WriteLine("");
+            }
+            MakeMove.run(move, Move_Type.all_moves, currState);
             //currState.print_board();
-            //Debug.WriteLine(ToMove);
-            //Debug.WriteLine("White");
-            //BitBoard.print_bitboard(currState.Occupancies[(int)Side.White]);
-            //Debug.WriteLine("Black");
-            //BitBoard.print_bitboard(currState.Occupancies[(int)Side.Black]);
-            //Debug.WriteLine("Both");
-            //BitBoard.print_bitboard(currState.Occupancies[(int)Side.Both]);
-            //Debug.WriteLine("SP: " + BitBoard.square_to_coordinates(sourceSquare) + " TP: " + BitBoard.square_to_coordinates(targetSquare));
+            //currState.Enpassant = (int)Square.no_sq;
+            //EnpFlag = false;
+            //if (flag == 4)
+            //{
+            //    HandleEnp(targetSquare);
+            //}
+
+            //HandleCastlingRights(sourceSquare);
+
+            //TargetSquare = targetSquare;
+            //currState.UpdateGameState(sourceSquare, targetSquare, flag);
+            ////Debug.WriteLine("");
+            ////currState.print_board();
+            ////Debug.WriteLine(ToMove);
+            ////Debug.WriteLine("White");
+            ////BitBoard.print_bitboard(currState.Occupancies[(int)Side.White]);
+            ////Debug.WriteLine("Black");
+            ////BitBoard.print_bitboard(currState.Occupancies[(int)Side.Black]);
+            ////Debug.WriteLine("Both");
+            ////BitBoard.print_bitboard(currState.Occupancies[(int)Side.Both]);
+            ////Debug.WriteLine("SP: " + BitBoard.square_to_coordinates(sourceSquare) + " TP: " + BitBoard.square_to_coordinates(targetSquare));
+            //currState.SideToMove = (currState.SideToMove == Side.White) ? Side.Black : Side.White;
+            
         }
 
         
 
-        public Color PieceColor()
+        public Side SideToMove()
         {
-            return PieceType.GetColor((int)SourcePiece);
+            return currState.SideToMove;
         }
 
         private void HandleEnp(int sq)

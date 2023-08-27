@@ -25,3 +25,8 @@ C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\ref\myChess.dll
 C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\myChess_Content.g.cs
 C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\capture.mp3
 C:\Users\vansh\source\repos\myChess\bin\Debug\net6.0-windows\move-self.mp3
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\UserControls\promotions.g.cs
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\UserControls\promotions.baml
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\GeneratedInternalTypeHelper.g.cs
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\UserControls\blackPromotions.g.cs
+C:\Users\vansh\source\repos\myChess\obj\Debug\net6.0-windows\Resources\UserControls\blackPromotions.baml
