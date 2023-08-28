@@ -1,7 +1,9 @@
-﻿using System;
+﻿using myChess.Resources.Classes.AI;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Printing;
 using System.Printing.IndexedProperties;
 using System.Reflection.Metadata;
 using System.Text;
@@ -13,7 +15,7 @@ namespace myChess.Resources.Classes
     public class AiMoveGen
     {
         BitGameState crSt;
-        AttackTables attks; 
+        static AttackTables attks; 
         Side side; // remember to set after calling the parse 
         List<int> Moves = new List<int>();
         long nodes=0;
@@ -39,55 +41,113 @@ namespace myChess.Resources.Classes
             crSt.parse_fen(Constants.TRICKY_POSITION);
             side = crSt.SideToMove;
             crSt.print_board();
-            nodes = 0;
-           
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            perft_driver(2);
-                
-            stopwatch.Stop();
-            Debug.WriteLine("Time taken: " + stopwatch.ElapsedMilliseconds + "ms");
-            Debug.WriteLine("Nodes Spotted: " + nodes);
+
+            int alpha = -50000;
+            int beta = 50000;
+            int depth = 1;
+
+            int eval = AlphaBetaSearch.Negamax(alpha, beta, depth, crSt);
+            Debug.WriteLine("\n\n "+eval+"\n");
+
+            Debug.Write("\n");
+            print_move(AlphaBetaSearch.best_move);
+            
+            Debug.Write("Nodes calculated: " + AlphaBetaSearch.nodes + "\n");
+            Debug.Write("\n");
+
+            //nodes = 0;
+
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            //perft_test(4,crSt);
+
+            //stopwatch.Stop();
+            //Debug.WriteLine("Time taken: " + stopwatch.ElapsedMilliseconds + "ms");
+            //Debug.WriteLine("Nodes Spotted: " + nodes);
         }
 
         // leaf nodes (number of positions reached during testing of the move generator at a given depth)
 
         //perft driver 
-        private void perft_driver(int depth)
+        void perft_driver(int depth, BitGameState gameState, ref long localNodes)
         {
             // recursion escape condition 
             if (depth == 0)
             {
-                //increment nodes count (count reached positions)
-                nodes++;
+                // increment nodes count (count reached positions)
+                localNodes++;
                 return;
             }
 
-            //generate moves 
-            generate_moves();
-            
-            //loop over all the generated psuedo legal moves
-            for (int i = 0; i < Moves.Count; i++)
+            // generate moves
+            List<int> movesList = generate_moves(gameState);
+
+            // loop over all the generated pseudo-legal moves
+            for (int i = 0; i < movesList.Count; i++)
             {
-                
+                BitGameState clonedState = (BitGameState)gameState.Clone();
 
-                BitGameState clonedState = (BitGameState)crSt.Clone();
-
-                //make move on the clone 
-                if (MakeMove.run(Moves[i], Move_Type.all_moves, clonedState) != 1)
+                // make move on the clone 
+                if (MakeMove.run(movesList[i], Move_Type.all_moves, clonedState) != 1)
                 {
                     continue;
                 }
 
-                //call perft driver recursively 
-                perft_driver(depth - 1);
-
+                // call perft driver recursively 
+                perft_driver(depth - 1, clonedState, ref localNodes);
             }
-
         }
 
+        void perft_test(int depth, BitGameState gameState)
+        {
+            Debug.WriteLine("\n\n   Performance Test \n\n");
+            // generate moves 
+            List<int> movesList = generate_moves(gameState);
+            long totalNodes = 0;
+            // loop over all the generated pseudo-legal moves
+            for (int i = 0; i < movesList.Count; i++)
+            {
+                BitGameState clonedState = (BitGameState)gameState.Clone();
 
+                // make move on the clone 
+                if (MakeMove.run(movesList[i], Move_Type.all_moves, clonedState) != 1)
+                {
+                    continue;
+                }
 
+                long localNodes = 0; // Local node count for this move
+
+                // call perft driver recursively 
+                perft_driver(depth - 1, clonedState, ref localNodes);
+
+                print_move(movesList[i]);
+                Debug.Write("   Nodes: " + localNodes + "\n");
+                totalNodes += localNodes;
+            }
+
+            Debug.WriteLine("\n Depth " + depth);
+            Debug.WriteLine("\n Total Nodes encountered " + totalNodes);
+        }
+
+        public int alphabetastuff(BitGameState gg)
+        {
+            crSt = gg;
+            //side = crSt.SideToMove;
+            //crSt.print_board();
+
+            int alpha = -50000;
+            int beta = 50000;
+            int depth = 6;
+
+            int eval = AlphaBetaSearch.Negamax(alpha, beta, depth, crSt);
+            Debug.WriteLine("\n\n " + eval);
+
+            
+            print_move(AlphaBetaSearch.best_move);
+            Debug.Write("\n");
+            Debug.Write("Nodes calculated: " + AlphaBetaSearch.nodes +"\n");
+            return AlphaBetaSearch.best_move;
+        }
 
 
 
@@ -97,8 +157,8 @@ namespace myChess.Resources.Classes
             side = crSt.SideToMove;
             //crSt.print_board();
             List<int> RandomMovesList = new List<int>();
-            generate_moves();
-            for(int i = 0; i < Moves.Count; i++)
+            List<int>movesList  = generate_moves(gg);
+            for(int i = 0; i < movesList.Count; i++)
             {
                 int move = Moves[i];
 
@@ -162,27 +222,27 @@ namespace myChess.Resources.Classes
         {
             Debug.Write(BitBoard.square_to_coordinates(Codec.get_move_source(move)));
             Debug.Write(BitBoard.square_to_coordinates(Codec.get_move_target(move)));
-            Debug.Write(crSt.Ascii_Pieces[(int)Codec.get_move_promoted(move)].ToString());
+            Debug.Write(crSt.Ascii_Pieces[(int)Codec.get_move_piece(move)].ToString());
         }
 
-        public void generate_moves()
+        public static List<int> generate_moves(BitGameState gameState)
         {
             int source_square, target_square;
 
-            Moves = new List<int> ();
+            List<int> PMoves = new List<int> ();
 
             ulong bitboard, attacks;
 
-            Debug.Write("\n\n" + side + "\n");
+          
             foreach(CombinedPiece piece in Enum.GetValues(typeof(CombinedPiece)))
             {
                 if (piece == CombinedPiece.None) continue;
 
                 //init pieec bitboard copy
-                bitboard = crSt.PieceList[(int)piece];
+                bitboard = gameState.PieceList[(int)piece];
 
                 //generate white pawns and white's king castling moves
-                if (side == Side.White)
+                if (gameState.SideToMove == Side.White)
                 {
 
                     if(piece == CombinedPiece.WhitePawn)
@@ -196,29 +256,29 @@ namespace myChess.Resources.Classes
 
 
                             //generate quite pawn moves
-                            if(!(target_square< 0) && BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], target_square) == 0)
+                            if(!(target_square< 0) && BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], target_square) == 0)
                             {
                                 // pawn promotion
                                 if (source_square >= (int)Square.a7 && source_square <=(int)Square.h7)
                                 {
                                     // add move into the list
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteQueen, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteRook, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteBishop, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteKnight, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteQueen, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteRook, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteBishop, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteKnight, 0, 0, 0, 0));
                                    
                                 }
                                 else
                                 {
                                     //one square ahead pawn moves
                                     
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece,0, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece,0, 0, 0, 0, 0));
 
                                     //two squares ahead pawn moves 
-                                    if ((source_square >= (int)Square.a2) && (source_square<=(int)Square.h2) && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], target_square - 8) == 0))
+                                    if ((source_square >= (int)Square.a2) && (source_square<=(int)Square.h2) && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], target_square - 8) == 0))
                                     {
                                         
-                                        Moves.Add(Codec.encode_move(source_square, target_square-8, (int)piece, 0, 0, 1, 0, 0));
+                                        PMoves.Add(Codec.encode_move(source_square, target_square-8, (int)piece, 0, 0, 1, 0, 0));
                                     }
 
                                 }
@@ -226,7 +286,7 @@ namespace myChess.Resources.Classes
 
                             }
                             //init pawn attacks bitboard 
-                            attacks = attks.pawn_attacks[(int)side, source_square] & crSt.Occupancies[(int)Side.Black];
+                            attacks = attks.pawn_attacks[(int)gameState.SideToMove, source_square] & gameState.Occupancies[(int)Side.Black];
 
                             //generate pawn captures 
                             while (attacks>0)
@@ -238,24 +298,24 @@ namespace myChess.Resources.Classes
                                 {
                                     // add move into the list
                                   
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteQueen, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteRook, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteBishop, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteKnight, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteQueen, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteRook, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteBishop, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.WhiteKnight, 1, 0, 0, 0));
 
                                 }
                                 else
                                 {
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                                 }
                                 //pop lisb
                                 BitBoard.pop_bit(ref attacks,target_square);
                             }
                             // generate enpassant captures 
-                            if (crSt.Enpassant != (int)Square.no_sq)
+                            if (gameState.Enpassant != (int)Square.no_sq)
                             {
                                 //lookup pawn attacks and bitwise AND with enpassant square (bit)              
-                                ulong enp_attacks = attks.pawn_attacks[(int)side, source_square] & (1Ul << crSt.Enpassant);
+                                ulong enp_attacks = attks.pawn_attacks[(int)gameState.SideToMove, source_square] & (1Ul << gameState.Enpassant);
 
                                 //make sure enpassant capture available 
                                 if (enp_attacks > 0)
@@ -263,7 +323,7 @@ namespace myChess.Resources.Classes
                                     //init enpassant capture target square 
                                     int target_enpassant = BitBoard.get_lsb_index(enp_attacks);
 
-                                    Moves.Add(Codec.encode_move(source_square, target_enpassant, (int)piece, 0, 1, 0, 1, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_enpassant, (int)piece, 0, 1, 0, 1, 0));
                                    
                                 }
                             }
@@ -278,34 +338,34 @@ namespace myChess.Resources.Classes
                     if(piece == CombinedPiece.WhiteKing)
                     {
                         //king side castling is available 
-                        if((crSt.CastlingRights & (int)Castle.wk) != 0)
+                        if((gameState.CastlingRights & (int)Castle.wk) != 0)
                         {
                             //make sure the squares between king and corresponding rook are emty
-                            if ((BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.f1))==0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.g1)) == 0)
+                            if ((BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.f1))==0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.g1)) == 0)
                             {
                                 //make sure the king and the f1 square are not in in check
-                                if((MakeMove.is_square_attacked((int)Square.e1,Side.Black,crSt))==0 && (MakeMove.is_square_attacked((int)Square.f1, Side.Black, crSt)) == 0)
+                                if((MakeMove.is_square_attacked((int)Square.e1,Side.Black,gameState))==0 && (MakeMove.is_square_attacked((int)Square.f1, Side.Black, gameState)) == 0)
                                 {
                                    
 
-                                    Moves.Add(Codec.encode_move((int)Square.e1, (int)Square.g1, (int)piece, 0, 0, 0, 0, 1));
+                                    PMoves.Add(Codec.encode_move((int)Square.e1, (int)Square.g1, (int)piece, 0, 0, 0, 0, 1));
                                 }
                             }
                         }
 
                         //queen side castlin available 
                         //king side castling is available 
-                        if ((crSt.CastlingRights & (int)Castle.wq) != 0)
+                        if ((gameState.CastlingRights & (int)Castle.wq) != 0)
                         {
                             //make sure the squares between king and corresponding rook are emty
-                            if ((BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.d1)) == 0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.c1)) == 0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.b1)) == 0)
+                            if ((BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.d1)) == 0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.c1)) == 0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.b1)) == 0)
                             {
                                 //make sure the king and the f1 square are not in in check
-                                if ((MakeMove.is_square_attacked((int)Square.e1, Side.Black, crSt)) == 0 && (MakeMove.is_square_attacked((int)Square.d1, Side.Black, crSt)) == 0)
+                                if ((MakeMove.is_square_attacked((int)Square.e1, Side.Black, gameState)) == 0 && (MakeMove.is_square_attacked((int)Square.d1, Side.Black, gameState)) == 0)
                                 {
                                    
 
-                                    Moves.Add(Codec.encode_move((int)Square.e1, (int)Square.c1, (int)piece, 0, 0, 0, 0, 1));
+                                    PMoves.Add(Codec.encode_move((int)Square.e1, (int)Square.c1, (int)piece, 0, 0, 0, 0, 1));
                                 }
                             }
                         }
@@ -328,30 +388,30 @@ namespace myChess.Resources.Classes
 
 
                             //generate quite pawn moves
-                            if (!(target_square >63) && BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], target_square) == 0)
+                            if (!(target_square >63) && BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], target_square) == 0)
                             {
                                 // pawn promotion
                                 if (source_square >= (int)Square.a2 && source_square <= (int)Square.h2)
                                 {
                                    
                                     // add move into the list
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackQueen, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackRook, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackBishop, 0, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackKnight, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackQueen, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackRook, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackBishop, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackKnight, 0, 0, 0, 0));
 
                                 }
                                 else
                                 {
                                     //one square ahead pawn moves
                                    
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
 
                                     //two squares ahead pawn moves 
-                                    if ((source_square >= (int)Square.a7) && (source_square <= (int)Square.h7) && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], target_square + 8) == 0))
+                                    if ((source_square >= (int)Square.a7) && (source_square <= (int)Square.h7) && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], target_square + 8) == 0))
                                     {
                                         
-                                        Moves.Add(Codec.encode_move(source_square, target_square+8, (int)piece, 0, 0, 1, 0, 0));
+                                        PMoves.Add(Codec.encode_move(source_square, target_square+8, (int)piece, 0, 0, 1, 0, 0));
                                     }
 
                                 }
@@ -359,7 +419,7 @@ namespace myChess.Resources.Classes
 
                             }
                             //init pawn attacks bitboard 
-                            attacks = attks.pawn_attacks[(int)side, source_square] & crSt.Occupancies[(int)Side.White];
+                            attacks = attks.pawn_attacks[(int)gameState.SideToMove, source_square] & gameState.Occupancies[(int)Side.White];
 
                             //generate pawn captures 
                             while (attacks > 0)
@@ -371,25 +431,25 @@ namespace myChess.Resources.Classes
                                 {
                                     // add move into the list
                                    
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackQueen, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackRook, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackBishop, 1, 0, 0, 0));
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackKnight, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackQueen, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackRook, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackBishop, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, (int)CombinedPiece.BlackKnight, 1, 0, 0, 0));
                                 }
                                 else
                                 {
                                    
-                                    Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
 
                                 }
                                 //pop lisb
                                 BitBoard.pop_bit(ref attacks, target_square);
                             }
                             // generate enpassant captures 
-                            if (crSt.Enpassant != (int)Square.no_sq)
+                            if (gameState.Enpassant != (int)Square.no_sq)
                             {
                                 //lookup pawn attacks and bitwise AND with enpassant square (bit)
-                                ulong enp_attacks = attks.pawn_attacks[(int)side, source_square] & (1Ul << crSt.Enpassant);
+                                ulong enp_attacks = attks.pawn_attacks[(int)gameState.SideToMove, source_square] & (1Ul << gameState.Enpassant);
                       
 
                                 //make sure enpassant capture available 
@@ -397,7 +457,7 @@ namespace myChess.Resources.Classes
                                 {
                                     //init enpassant capture target square 
                                     int target_enpassant = BitBoard.get_lsb_index(enp_attacks);
-                                    Moves.Add(Codec.encode_move(source_square, target_enpassant, (int)piece, 0, 1, 0, 1, 0));
+                                    PMoves.Add(Codec.encode_move(source_square, target_enpassant, (int)piece, 0, 1, 0, 1, 0));
                                     
                                 }
                             }
@@ -411,32 +471,32 @@ namespace myChess.Resources.Classes
                     if (piece == CombinedPiece.BlackKing)
                     {
                         //king side castling is available 
-                        if ((crSt.CastlingRights & (int)Castle.bk) != 0)
+                        if ((gameState.CastlingRights & (int)Castle.bk) != 0)
                         {
                             //make sure the squares between king and corresponding rook are emty
-                            if ((BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.f8)) == 0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.g8)) == 0)
+                            if ((BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.f8)) == 0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.g8)) == 0)
                             {
                                 //make sure the king and the f1 square are not in in check
-                                if ((MakeMove.is_square_attacked((int)Square.e8, Side.White, crSt)) == 0 && (MakeMove.is_square_attacked((int)Square.f8, Side.White, crSt)) == 0)
+                                if ((MakeMove.is_square_attacked((int)Square.e8, Side.White, gameState)) == 0 && (MakeMove.is_square_attacked((int)Square.f8, Side.White, gameState)) == 0)
                                 {
                                    
-                                    Moves.Add(Codec.encode_move((int)Square.e8, (int)Square.g8, (int)piece, 0, 0, 0, 0, 1));
+                                    PMoves.Add(Codec.encode_move((int)Square.e8, (int)Square.g8, (int)piece, 0, 0, 0, 0, 1));
                                 }
                             }
                         }
 
                         //queen side castlin available 
                         //king side castling is available 
-                        if ((crSt.CastlingRights & (int)Castle.bq) != 0)
+                        if ((gameState.CastlingRights & (int)Castle.bq) != 0)
                         {
                             //make sure the squares between king and corresponding rook are emty
-                            if ((BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.d8)) == 0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.c8)) == 0 && (BitBoard.get_bit(crSt.Occupancies[(int)Side.Both], (int)Square.b8)) == 0)
+                            if ((BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.d8)) == 0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.c8)) == 0 && (BitBoard.get_bit(gameState.Occupancies[(int)Side.Both], (int)Square.b8)) == 0)
                             {
                                 //make sure the king and the f1 square are not in in check
-                                if ((MakeMove.is_square_attacked((int)Square.e8, Side.White, crSt)) == 0 && (MakeMove.is_square_attacked((int)Square.d8, Side.White, crSt)) == 0)
+                                if ((MakeMove.is_square_attacked((int)Square.e8, Side.White, gameState)) == 0 && (MakeMove.is_square_attacked((int)Square.d8, Side.White, gameState)) == 0)
                                 {
                                    
-                                    Moves.Add(Codec.encode_move((int)Square.e8, (int)Square.c8, (int)piece, 0, 0, 0, 0, 1));
+                                    PMoves.Add(Codec.encode_move((int)Square.e8, (int)Square.c8, (int)piece, 0, 0, 0, 0, 1));
                                 }
                             }
                         }
@@ -444,14 +504,14 @@ namespace myChess.Resources.Classes
                 }
 
                 //generate knight moves 
-                if((side==Side.White) ? piece==CombinedPiece.WhiteKnight: piece == CombinedPiece.BlackKnight)
+                if((gameState.SideToMove==Side.White) ? piece==CombinedPiece.WhiteKnight: piece == CombinedPiece.BlackKnight)
                 {
                     while (bitboard > 0)
                     {
                         source_square = BitBoard.get_lsb_index(bitboard);
 
                         //init piece attacks in order to get set of target squares 
-                        attacks = attks.knight_attacks[source_square] & ((side == Side.White) ? ~crSt.Occupancies[(int)Side.White] : ~crSt.Occupancies[(int)Side.Black]);
+                        attacks = attks.knight_attacks[source_square] & ((gameState.SideToMove == Side.White) ? ~gameState.Occupancies[(int)Side.White] : ~gameState.Occupancies[(int)Side.Black]);
 
 
 
@@ -462,16 +522,16 @@ namespace myChess.Resources.Classes
 
 
                             //quiet moves
-                            if (BitBoard.get_bit((side == Side.White) ? crSt.Occupancies[(int)Side.Black] : crSt.Occupancies[(int)Side.White] , target_square) == 0)
+                            if (BitBoard.get_bit((gameState.SideToMove == Side.White) ? gameState.Occupancies[(int)Side.Black] : gameState.Occupancies[(int)Side.White] , target_square) == 0)
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
                             }
                             //Capture moves
                             else
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                             }
 
                             //escape
@@ -484,14 +544,14 @@ namespace myChess.Resources.Classes
                 }
 
                 //generate bishop moves
-                if ((side == Side.White) ? piece == CombinedPiece.WhiteBishop : piece == CombinedPiece.BlackBishop)
+                if ((gameState.SideToMove== Side.White) ? piece == CombinedPiece.WhiteBishop : piece == CombinedPiece.BlackBishop)
                 {
                     while (bitboard > 0)
                     {
                         source_square = BitBoard.get_lsb_index(bitboard);
 
                         //init piece attacks in order to get set of target squares 
-                        attacks = attks.get_bishop_attacks(source_square, crSt.Occupancies[(int)Side.Both]) & ((side == Side.White) ? ~crSt.Occupancies[(int)Side.White] : ~crSt.Occupancies[(int)Side.Black]);
+                        attacks = attks.get_bishop_attacks(source_square, gameState.Occupancies[(int)Side.Both]) & ((gameState.SideToMove== Side.White) ? ~gameState.Occupancies[(int)Side.White] : ~gameState.Occupancies[(int)Side.Black]);
 
 
 
@@ -502,16 +562,16 @@ namespace myChess.Resources.Classes
 
 
                             //quiet moves
-                            if (BitBoard.get_bit((side == Side.White) ? crSt.Occupancies[(int)Side.Black] : crSt.Occupancies[(int)Side.White], target_square) == 0)
+                            if (BitBoard.get_bit((gameState.SideToMove == Side.White) ? gameState.Occupancies[(int)Side.Black] : gameState.Occupancies[(int)Side.White], target_square) == 0)
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
                             }
                             //Capture moves
                             else
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                             }
 
                             //escape
@@ -524,14 +584,14 @@ namespace myChess.Resources.Classes
                 }
 
                 //generate rook moves
-                if ((side == Side.White) ? piece == CombinedPiece.WhiteRook : piece == CombinedPiece.BlackRook)
+                if ((gameState.SideToMove == Side.White) ? piece == CombinedPiece.WhiteRook : piece == CombinedPiece.BlackRook)
                 {
                     while (bitboard > 0)
                     {
                         source_square = BitBoard.get_lsb_index(bitboard);
 
                         //init piece attacks in order to get set of target squares 
-                        attacks = attks.get_rook_attacks(source_square, crSt.Occupancies[(int)Side.Both]) & ((side == Side.White) ? ~crSt.Occupancies[(int)Side.White] : ~crSt.Occupancies[(int)Side.Black]);
+                        attacks = attks.get_rook_attacks(source_square, gameState.Occupancies[(int)Side.Both]) & ((gameState.SideToMove== Side.White) ? ~gameState.Occupancies[(int)Side.White] : ~gameState.Occupancies[(int)Side.Black]);
 
 
 
@@ -542,16 +602,16 @@ namespace myChess.Resources.Classes
 
 
                             //quiet moves
-                            if (BitBoard.get_bit((side == Side.White) ? crSt.Occupancies[(int)Side.Black] : crSt.Occupancies[(int)Side.White], target_square) == 0)
+                            if (BitBoard.get_bit((gameState.SideToMove == Side.White) ? gameState.Occupancies[(int)Side.Black] : gameState.Occupancies[(int)Side.White], target_square) == 0)
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
                             }
                             //Capture moves
                             else
                             {
                                
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                               PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                             }
 
                             //escape
@@ -564,14 +624,14 @@ namespace myChess.Resources.Classes
                 }
 
                 //generate queen moves
-                if ((side == Side.White) ? piece == CombinedPiece.WhiteQueen : piece == CombinedPiece.BlackQueen)
+                if ((gameState.SideToMove == Side.White) ? piece == CombinedPiece.WhiteQueen : piece == CombinedPiece.BlackQueen)
                 {
                     while (bitboard > 0)
                     {
                         source_square = BitBoard.get_lsb_index(bitboard);
 
                         //init piece attacks in order to get set of target squares 
-                        attacks = attks.get_queen_attacks(source_square, crSt.Occupancies[(int)Side.Both]) & ((side == Side.White) ? ~crSt.Occupancies[(int)Side.White] : ~crSt.Occupancies[(int)Side.Black]);
+                        attacks = attks.get_queen_attacks(source_square, gameState.Occupancies[(int)Side.Both]) & ((gameState.SideToMove == Side.White) ? ~gameState.Occupancies[(int)Side.White] : ~gameState.Occupancies[(int)Side.Black]);
 
 
 
@@ -582,16 +642,16 @@ namespace myChess.Resources.Classes
 
 
                             //quiet moves
-                            if (BitBoard.get_bit((side == Side.White) ? crSt.Occupancies[(int)Side.Black] : crSt.Occupancies[(int)Side.White], target_square) == 0)
+                            if (BitBoard.get_bit((gameState.SideToMove == Side.White) ? gameState.Occupancies[(int)Side.Black] : gameState.Occupancies[(int)Side.White], target_square) == 0)
                             {
                                
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
                             }
                             //Capture moves
                             else
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                             }
 
                             //escape
@@ -604,14 +664,14 @@ namespace myChess.Resources.Classes
                 }
 
                 //generate king moves 
-                if ((side == Side.White) ? piece == CombinedPiece.WhiteKing : piece == CombinedPiece.BlackKing)
+                if ((gameState.SideToMove == Side.White) ? piece == CombinedPiece.WhiteKing : piece == CombinedPiece.BlackKing)
                 {
                     while (bitboard > 0)
                     {
                         source_square = BitBoard.get_lsb_index(bitboard);
 
                         //init piece attacks in order to get set of target squares 
-                        attacks = attks.king_attacks[source_square] & ((side == Side.White) ? ~crSt.Occupancies[(int)Side.White] : ~crSt.Occupancies[(int)Side.Black]);
+                        attacks = attks.king_attacks[source_square] & ((gameState.SideToMove == Side.White) ? ~gameState.Occupancies[(int)Side.White] : ~gameState.Occupancies[(int)Side.Black]);
 
 
 
@@ -622,16 +682,16 @@ namespace myChess.Resources.Classes
 
 
                             //quiet moves
-                            if (BitBoard.get_bit((side == Side.White) ? crSt.Occupancies[(int)Side.Black] : crSt.Occupancies[(int)Side.White], target_square) == 0)
+                            if (BitBoard.get_bit((gameState.SideToMove == Side.White) ? gameState.Occupancies[(int)Side.Black] : gameState.Occupancies[(int)Side.White], target_square) == 0)
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 0, 0, 0, 0));
                             }
                             //Capture moves
                             else
                             {
                                 
-                                Moves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
+                                PMoves.Add(Codec.encode_move(source_square, target_square, (int)piece, 0, 1, 0, 0, 0));
                             }
 
                             //escape
@@ -644,6 +704,7 @@ namespace myChess.Resources.Classes
                 }
 
             }
+            return PMoves;
 
         }
        

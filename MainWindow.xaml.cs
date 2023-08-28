@@ -11,6 +11,7 @@ namespace myChess
     /// </summary>
     public partial class MainWindow : Window
     {
+        BoardUI ui;
         //public MainWindow()
         //{
         //    InitializeComponent();
@@ -19,7 +20,7 @@ namespace myChess
         //    SolidColorBrush lightSquareBrush = (SolidColorBrush)FindResource("lightSqareColor");
         //    SolidColorBrush darkSquareBrush = (SolidColorBrush)FindResource("darkSquareColor");
         //    Board board = new Board(ChessBoard, lightSquareBrush, darkSquareBrush);
-        //    BoardUI ui = new BoardUI(board);
+        //    ui = new BoardUI(board);
         //}
 
         //private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -29,8 +30,16 @@ namespace myChess
         //        Close();
         //        Application.Current.Shutdown();
         //    }
-
         //}
+        private async void MakeMoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Call the MakeMoveAi function on your BoardUi instance
+            await ui.MakeMoveAi();
+        }
+
+
+
+
         public MainWindow()
         {
             InitializeComponent();

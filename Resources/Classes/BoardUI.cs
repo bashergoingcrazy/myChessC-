@@ -598,9 +598,9 @@ namespace myChess.Resources.Classes
         }
 
 
-        private async Task MakeMoveAi()
+        public async Task MakeMoveAi()
         {
-            int move = _aiMoveGen.GenerateRandomMove(_moveGen.currState);
+            int move = _aiMoveGen.alphabetastuff(_moveGen.currState);
             if (move == 0) { return; }
             int sourceSquare = Codec.get_move_source(move);
             int targetSquare = Codec.get_move_target(move);
@@ -722,34 +722,43 @@ namespace myChess.Resources.Classes
 
             if (Codec.get_move_castle(move) == 1)
             {
+                Debug.Write("Correctly reached here but still not working ");
                 Image RookImage = new Image();
                 switch (targetSquare)
                 {
                     case ((int)Square.g1):
                         RookImage = FindImageAtPosition((int)Square.h1 / 8,(int)Square.h1 % 8);
                         _board._grid.Children.Remove(RookImage);
+                        _board._grid.Children.Add(RookImage);
                         Grid.SetRow(RookImage, (int)Square.f1 / 8);
                         Grid.SetColumn(RookImage, (int)Square.f1 % 8);
+                        _board._grid.Children.Add(RookImage);
                         break;
                     case ((int)Square.c1):
                         RookImage = FindImageAtPosition((int)Square.a1 / 8,(int)Square.a1 % 8);
                         _board._grid.Children.Remove(RookImage);
+                        _board._grid.Children.Add(RookImage);
                         Grid.SetRow(RookImage, (int)Square.d1 / 8);
                         Grid.SetColumn(RookImage, (int)Square.d1 % 8);
+                        
                         break;
                     case ((int)Square.g8):
                         RookImage = FindImageAtPosition((int)Square.h8 / 8,(int)Square.h8 % 8);
                         _board._grid.Children.Remove(RookImage);
+                        _board._grid.Children.Add(RookImage);
                         Grid.SetRow(RookImage, (int)Square.f8 / 8);
                         Grid.SetColumn(RookImage, (int)Square.f8 % 8);
+                        
                         break;
                     case ((int)Square.c8):
                         RookImage = FindImageAtPosition((int)Square.a8 / 8,(int)Square.a8 % 8);
                         _board._grid.Children.Remove(RookImage);
+                        _board._grid.Children.Add(RookImage);
                         Grid.SetRow(RookImage, (int)Square.f1 / 8);
                         Grid.SetColumn(RookImage, (int)Square.f1 % 8);
                         break;
                 }
+
             }
 
             //first update the move in the backend 
@@ -842,6 +851,7 @@ namespace myChess.Resources.Classes
                 {
                     Side winner = ((int)Side.White == checker.Y) ? Side.Black : Side.White;
                     MessageBox.Show(winner + "Won");
+                    return;
                 }
 
 
@@ -851,6 +861,7 @@ namespace myChess.Resources.Classes
                 {
                     square.Fill = Brushes.Red;
                     isInCheck = true;
+                    
                 }
             }
             

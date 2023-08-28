@@ -36,7 +36,7 @@
                 <RowDefinition />
                 <RowDefinition Height="100"/>
             </Grid.RowDefinitions>
-
+            <Button x:Name="MakeMoveButton" Content="Make AI Move" Click="MakeMoveButton_Click" Grid.Row="2" Height="75" Width="100" />
             <Grid Grid.Row="1" Width="600" Name="ChessBoard" Background="{StaticResource mainBack}">
                 <!--Chess board to be created here -->
                 <Grid.RowDefinitions>
